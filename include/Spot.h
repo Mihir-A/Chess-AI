@@ -8,8 +8,9 @@ private:
 public:
 	Spot();
 	Spot(int x, int y, Piece* p);
-	int getX();
-	int getY();
+	int getX() const;
+	int getY() const;
+	Piece* getPiece() const;
 
 };
 

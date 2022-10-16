@@ -1,4 +1,5 @@
 #include "Spot.h"
+#include "Piece.h"
 
 Spot::Spot()
 {
@@ -19,4 +20,9 @@ int Spot::getX()
 int Spot::getY()
 {
     return y;
+}
+
+Piece* Spot::getPiece()
+{
+    return p;
 }

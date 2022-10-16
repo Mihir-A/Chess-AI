@@ -1,4 +1,5 @@
 #include "Piece.h"
+#include "Spot.h"
 
 Piece::Piece(bool white)
 {
@@ -8,4 +9,9 @@ Piece::Piece(bool white)
 bool Piece::isWhite()
 {
     return white;
+}
+
+bool Piece::canMove(Spot o, Spot n, Board b)
+{
+    return false;
 }

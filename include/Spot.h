@@ -1,5 +1,5 @@
 #pragma once
-#include "Piece.h"
+class Piece;
 class Spot
 {
 private:
@@ -10,6 +10,6 @@ public:
 	Spot(int x, int y, Piece* p);
 	int getX();
 	int getY();
-
+	Piece* getPiece();
 };
 

@@ -1,4 +1,6 @@
 #pragma once
+#include <Board.h>
+class Spot;
 class Piece
 {
 protected:
@@ -6,6 +8,6 @@ protected:
 public:
 	Piece(bool white);
 	bool isWhite();
-	virtual bool canMove() = 0;
+	virtual bool canMove(Spot o, Spot n, Board b);
 };
 

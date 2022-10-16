@@ -1,7 +1,5 @@
 #pragma once
 #include "Board.h"
-#include "SFML/Graphics.hpp"
-#include "SFML/Window.hpp"
 class Game
 {
 public:

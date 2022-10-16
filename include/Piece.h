@@ -1,5 +1,4 @@
 #pragma once
-#include "Game.h"
 class Piece
 {
 protected:
@@ -7,6 +6,6 @@ protected:
 public:
 	Piece(bool white);
 	bool isWhite();
-	virtual bool canMove(const Spot& s) = 0;
+	virtual bool canMove() = 0;
 };
 

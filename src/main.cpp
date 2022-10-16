@@ -1,9 +1,12 @@
 #include <iostream>
 #include "Board.h"
+#include "Game.h"
+#include "SFML/Graphics.hpp"
 
 int main() {
 	
-	Board b = Board();
+	Game game = Game();
+	game.play();
 	
 	return 0;
 }

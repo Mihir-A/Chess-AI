@@ -28,6 +28,7 @@
 *.lib
 .vs/
 bin/
+lib/cmake
 
 # Executables
 *.exe

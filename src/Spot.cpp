@@ -12,17 +12,17 @@ Spot::Spot(int x, int y, Piece* p)
     this->p = p;
 }
 
-int Spot::getX()
+int Spot::getX() const
 {
     return x;
 }
 
-int Spot::getY()
+int Spot::getY() const
 {
     return y;
 }
 
-Piece* Spot::getPiece()
+Piece* Spot::getPiece() const
 {
     return p;
 }

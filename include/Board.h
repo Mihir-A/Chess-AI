@@ -8,5 +8,6 @@ private:
 	std::array<std::array<Spot, 8>, 8> b;
 public:
 	Board();
+	const Spot& getSpot(int x, int y) const;
 };
 

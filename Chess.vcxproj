@@ -157,6 +157,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\King.cpp" />
     <ClCompile Include="src\Board.cpp" />
     <ClCompile Include="src\Game.cpp" />
     <ClCompile Include="src\Spot.cpp" />
@@ -168,6 +169,7 @@
     <ClInclude Include="include\Game.h" />
     <ClInclude Include="include\Piece.h" />
     <ClInclude Include="include\Spot.h" />
+    <ClInclude Include="include\King.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

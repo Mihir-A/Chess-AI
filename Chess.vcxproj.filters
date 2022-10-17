@@ -7,6 +7,11 @@
     <ClCompile Include="src\Board.cpp" />
     <ClCompile Include="src\Game.cpp" />
     <ClCompile Include="src\King.cpp" />
+    <ClCompile Include="src\Queen.cpp" />
+    <ClCompile Include="src\Knight.cpp" />
+    <ClCompile Include="src\Bishop.cpp" />
+    <ClCompile Include="src\Rook.cpp" />
+    <ClCompile Include="src\Pawn.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Piece.h" />
@@ -14,5 +19,10 @@
     <ClInclude Include="include\Board.h" />
     <ClInclude Include="include\Game.h" />
     <ClInclude Include="include\King.h" />
+    <ClInclude Include="include\Queen.h" />
+    <ClInclude Include="include\Knight.h" />
+    <ClInclude Include="include\Bishop.h" />
+    <ClInclude Include="include\Rook.h" />
+    <ClInclude Include="include\Pawn.h" />
   </ItemGroup>
 </Project>

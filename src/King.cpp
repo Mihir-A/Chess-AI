@@ -3,14 +3,9 @@
 King::King(bool white) 
 	: Piece(white) 
 {
-	if (white) {
-		if (!texture.loadFromFile("assets/piece/kingwhite.png")) {
-			std::cout << "Unable to load assets/piece/kingwhite.png";
-		}
-	}
-	else {
-		if (!texture.loadFromFile("assets/piece/kingblack.png")) {
-			std::cout << "Unable to load assets/piece/kingblack.png";
-		}
-	}
+	if (white) 
+		texture.loadFromFile("assets/piece/wk.png");
+	
+	else 
+		texture.loadFromFile("assets/piece/bk.png");
 }

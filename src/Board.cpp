@@ -10,7 +10,6 @@ Board::Board()
 			this->b[i][j] = Spot(i, j, nullptr);
 		}
 	}
-
 	b[0][0] = Spot(0, 0, new King(true));
 }
 

@@ -11,5 +11,6 @@ public:
 	int getX() const;
 	int getY() const;
 	Piece* getPiece() const;
+	void deletePiece();
 };
 

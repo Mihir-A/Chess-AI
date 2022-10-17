@@ -10,7 +10,9 @@ public:
 	void play();
 	void draw();
 private:
+	unsigned int windowSize;
 	sf::RenderWindow window;
 	Board board;
+	sf::RectangleShape grid;
 };
 

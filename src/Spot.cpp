@@ -37,3 +37,8 @@ Piece* Spot::getPiece() const
 {
     return p;
 }
+
+void Spot::setPiece(Piece* p)
+{
+    this->p = p;
+}

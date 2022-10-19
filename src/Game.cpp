@@ -1,5 +1,5 @@
 #include "Game.h"
-#include "King.h"
+#include "Piece.h"
 #include<iostream>
 
 Game::Game()
@@ -29,7 +29,7 @@ void Game::play()
                     heldSpot = board.getSpot(event.mouseButton.x / (windowSize / 8), event.mouseButton.y / (windowSize / 8));
                 }
             }
-            else if (event.type == sf::Event::MouseButtonReleased) {
+            else if (event.type == sf::Event::MouseButtonReleased && held == true) {
                 held = false;
                 const Spot& attemptedMove = board.getSpot(event.mouseButton.x / (windowSize / 8), event.mouseButton.y / (windowSize / 8));
 
@@ -55,7 +55,7 @@ void Game::play()
             if (held == true) {
                 //std::cout << heldPiece.getX() << " " << heldPiece.getY() << '\n';
             }
-
+            //std::cout << sf::Mouse::getPosition(window).x << " y: " << sf::Mouse::getPosition(window).y << " windowx: " << window.getSize().x << " y: " << window.getSize().y << '\n';
             draw();
         }
 	}
@@ -80,7 +80,7 @@ void Game::draw()
         else
             grid.setPosition(gSize, gSize * (i + 1));
         
-        //std::cout << grid.getSize().x << " y: " << grid.getSize().y << " windowx: " << window.getSize().x << " y: " << window.getSize().y << '\n';
+        
     }
 
     sf::Sprite heldSprite;
@@ -93,10 +93,9 @@ void Game::draw()
             if (board.getSpot(j, i).getPiece() != nullptr) {
                 if (board.getSpot(j, i).getPiece() == heldSpot.getPiece() && held == true) {
                     //This sets position of the held piece
-                    //TODO: fix offset
-                    float offset = 50;
+                    const int offset = 50;
                     heldSprite.setTexture(heldSpot.getPiece()->getTexture());
-                    heldSprite.setPosition(sf::Mouse::getPosition(window).x - offset, sf::Mouse::getPosition(window).y - offset);
+                    heldSprite.setPosition(sf::Mouse::getPosition(window).x * 800.0f / windowSize - offset, sf::Mouse::getPosition(window).y * 800.0f / windowSize - offset);
                 }
                 else {
                     sf::Sprite s;

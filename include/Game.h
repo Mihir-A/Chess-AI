@@ -14,7 +14,7 @@ private:
 	sf::RenderWindow window;
 	Board board;
 	sf::RectangleShape grid;
-	Spot heldPiece;
+	Spot heldSpot;
 	bool held;
 };
 

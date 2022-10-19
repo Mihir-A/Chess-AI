@@ -38,7 +38,7 @@ Piece* Spot::getPiece() const
     return p;
 }
 
-void Spot::setPiece(Piece* p)
+void Spot::setPiece(Piece* newP)
 {
-    this->p = p;
+    this->p = newP;
 }

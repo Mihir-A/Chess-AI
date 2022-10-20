@@ -23,22 +23,31 @@ void Game::play()
             if (event.type == sf::Event::Closed)
                 window.close();
             else if (event.type == sf::Event::MouseButtonPressed) {
-                if (board.getSpot(event.mouseButton.x / (windowSize / 8), event.mouseButton.y / (windowSize / 8)).getPiece() != nullptr) {
+
+                //X and Y cordinates of the grid where the mouse is clicked
+                const int xCord = event.mouseButton.x / (windowSize / 8);
+                const int yCord = event.mouseButton.y / (windowSize / 8);
+
+                if (board.getSpot(xCord, yCord).getPiece() != nullptr) {
                     held = true;
                     //Finds piece that the mouse is over when it clicks
-                    heldSpot = board.getSpot(event.mouseButton.x / (windowSize / 8), event.mouseButton.y / (windowSize / 8));
+                    heldSpot = board.getSpot(xCord, yCord);
                 }
             }
             else if (event.type == sf::Event::MouseButtonReleased && held == true) {
-                held = false;
-                const Spot& attemptedMove = board.getSpot(event.mouseButton.x / (windowSize / 8), event.mouseButton.y / (windowSize / 8));
 
-                if (heldSpot.getPiece()->canMove(heldSpot, attemptedMove, board)) {
-                    board.setPiece(event.mouseButton.x / (windowSize / 8), event.mouseButton.y / (windowSize / 8), heldSpot.getPiece());
-                    board.setPiece(heldSpot.getX(), heldSpot.getY(), nullptr);
+                //X and Y cordinates of the grid where the mouse is clicked
+                const int xCord = event.mouseButton.x / (windowSize / 8);
+                const int yCord = event.mouseButton.y / (windowSize / 8);
+                held = false;
+                if (xCord < 8 && xCord > -1 && yCord < 8 && yCord > -1){
+                    const Spot& attemptedMove = board.getSpot(xCord, yCord);
+
+                    if (heldSpot.getPiece()->canMove(heldSpot, attemptedMove, board)) {
+                        board.setPiece(xCord, yCord, heldSpot.getPiece());
+                        board.setPiece(heldSpot.getX(), heldSpot.getY(), nullptr);
+                    }
                 }
-                
-                //std::cout << "released\n";
             }
 
 

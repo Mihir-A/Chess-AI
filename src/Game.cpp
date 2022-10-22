@@ -22,6 +22,7 @@ void Game::play()
             // Close window: exit
             if (event.type == sf::Event::Closed)
                 window.close();
+
             else if (event.type == sf::Event::MouseButtonPressed) {
 
                 //X and Y cordinates of the grid where the mouse is clicked
@@ -44,12 +45,10 @@ void Game::play()
                     const Spot& attemptedMove = board.getSpot(xCord, yCord);
 
                     if (heldSpot.getPiece()->canMove(heldSpot, attemptedMove, board)) {
-                        board.setPiece(xCord, yCord, heldSpot.getPiece());
-                        board.setPiece(heldSpot.getX(), heldSpot.getY(), nullptr);
+                        makeMove(Move(heldSpot, attemptedMove));
                     }
                 }
             }
-
 
             //Makes sure the window is always a square
             if (window.getSize().x != windowSize) {
@@ -88,8 +87,6 @@ void Game::draw()
             grid.setPosition(0.0f, gSize * (i + 1));
         else
             grid.setPosition(gSize, gSize * (i + 1));
-        
-        
     }
 
     sf::Sprite heldSprite;
@@ -120,4 +117,13 @@ void Game::draw()
     //The held piece should be drawn over others
     window.draw(heldSprite);
     window.display();
+}
+
+
+void Game::makeMove(Move s) {
+    const Spot& start = s.getStart();
+    const Spot& end = s.getEnd();
+
+    board.setPiece(end.getX(), end.getY(), start.getPiece());
+    board.setPiece(start.getX(), start.getY(), nullptr);
 }

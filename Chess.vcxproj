@@ -159,6 +159,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\Move.cpp" />
     <ClCompile Include="src\Pawn.cpp" />
     <ClCompile Include="src\Rook.cpp" />
     <ClCompile Include="src\Bishop.cpp" />
@@ -182,6 +183,7 @@
     <ClInclude Include="include\Knight.h" />
     <ClInclude Include="include\Rook.h" />
     <ClInclude Include="include\Pawn.h" />
+    <ClInclude Include="include\Move.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

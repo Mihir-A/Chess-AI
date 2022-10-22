@@ -12,6 +12,7 @@
     <ClCompile Include="src\Bishop.cpp" />
     <ClCompile Include="src\Rook.cpp" />
     <ClCompile Include="src\Pawn.cpp" />
+    <ClCompile Include="src\Move.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Piece.h" />
@@ -24,5 +25,6 @@
     <ClInclude Include="include\Bishop.h" />
     <ClInclude Include="include\Rook.h" />
     <ClInclude Include="include\Pawn.h" />
+    <ClInclude Include="include\Move.h" />
   </ItemGroup>
 </Project>

@@ -21,14 +21,33 @@ bool Pawn::canMove(const Spot& o, const Spot& n, const Board& b) const
 	const int dx = o.getX() - n.getX();
 	const int dy = o.getY() - n.getY();
 
+	//checks if moving in corect direction
+	if (white) {
+		if (dy < 0) return false;
+	}
+	else {
+		if (dy > 0) return false;
+	}
+
 	if (n.getPiece() == nullptr) {
+
 		if (firstMove == true) {
-			firstMove = false;
-			
+			if (std::abs(dy) == 2 && dx == 0) {
+				firstMove = false;
+				return true;
+			}	
+		}
+
+		if (std::abs(dy) == 1 && dx == 0) {
+			return true;
 		}
 	}
 	else {
-
+		if (std::abs(dy) == 1 && std::abs(dx) == 1) {
+			firstMove = false;
+			return true;
+		}
 	}
-	return (dy <= 1 && dx <= 1);
+
+	return false;
 }

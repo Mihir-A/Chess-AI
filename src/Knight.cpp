@@ -20,3 +20,7 @@ bool Knight::canMove(const Spot& o, const Spot& n, const Board& b) const
 
 	return (dx == 2 && dy == 1 || dx == 1 && dy == 2);
 }
+
+void Knight::getPossibleMoves(std::vector<Move>& moves) const {
+
+}

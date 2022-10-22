@@ -6,5 +6,6 @@ class Knight :
 public:
     Knight(bool white);
     bool canMove(const Spot& o, const Spot& n, const Board& b) const;
+    void getPossibleMoves(std::vector<Move>& moves) const;
 };
 

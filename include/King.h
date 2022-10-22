@@ -4,7 +4,7 @@ class King :
     public Piece
 {
 public:
-    King(bool white);
-    bool canMove(const Spot& o, const Spot& n, const Board& b) const;
+    King(bool white, int x, int y);
+    bool canMove(int atemptX, int atemptY, const Board& b) const;
 };
 

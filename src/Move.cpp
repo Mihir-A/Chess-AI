@@ -1,16 +1,31 @@
 #include "Move.h"
 
-Move::Move(Spot startS, Spot endS)
-    :start(startS), end(endS)
+Move::Move(const Piece* p, int oldX, int oldY, int newX, int newY) 
+	:p(p)
 {
+	this->oldX = oldX;
+	this->oldY = oldY;
+	this->newX = newX;
+	this->newY = newY;
 }
 
-const Spot& Move::getStart()
+const Piece* Move::getPiece()
 {
-    return start;
+	return p;
 }
 
-const Spot& Move::getEnd()
-{
-    return end;
+int Move::getOldX() {
+	return oldX;
+}
+
+int Move::getOldY() {
+	return oldY;
+}
+
+int Move::getNewY() {
+	return newY;
+}
+
+int Move::getNewX() {
+	return newX;
 }

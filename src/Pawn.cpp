@@ -1,9 +1,8 @@
 #include "Pawn.h"
 #include "Piece.h"
-#include "Spot.h"
 
-Pawn::Pawn(bool white)
-	: Piece(white)
+Pawn::Pawn(bool white, int x, int y)
+	: Piece(white, x, y)
 {
 	if (white)
 		texture.loadFromFile("assets/piece/wp.png");
@@ -13,41 +12,41 @@ Pawn::Pawn(bool white)
 	firstMove = true;
 }
 
-bool Pawn::canMove(const Spot& o, const Spot& n, const Board& b) const
+bool Pawn::canMove(int atemptX, int atemptY, const Board& b) const
 {
-	if (Piece::canMove(o, n, b) == false)
-		return false;
+	//if (Piece::canMove(o, n, b) == false)
+		return true;
 
-	const int dx = o.getX() - n.getX();
-	const int dy = o.getY() - n.getY();
+	//const int dx = o.getX() - n.getX();
+	//const int dy = o.getY() - n.getY();
 
-	//checks if moving in corect direction
-	if (white) {
-		if (dy < 0) return false;
-	}
-	else {
-		if (dy > 0) return false;
-	}
+	////checks if moving in corect direction
+	//if (white) {
+	//	if (dy < 0) return false;
+	//}
+	//else {
+	//	if (dy > 0) return false;
+	//}
 
-	if (n.getPiece() == nullptr) {
+	//if (n.getPiece() == nullptr) {
 
-		if (firstMove == true) {
-			if (std::abs(dy) == 2 && dx == 0) {
-				firstMove = false;
-				return true;
-			}	
-		}
+	//	if (firstMove == true) {
+	//		if (std::abs(dy) == 2 && dx == 0) {
+	//			firstMove = false;
+	//			return true;
+	//		}	
+	//	}
 
-		if (std::abs(dy) == 1 && dx == 0) {
-			return true;
-		}
-	}
-	else {
-		if (std::abs(dy) == 1 && std::abs(dx) == 1) {
-			firstMove = false;
-			return true;
-		}
-	}
+	//	if (std::abs(dy) == 1 && dx == 0) {
+	//		return true;
+	//	}
+	//}
+	//else {
+	//	if (std::abs(dy) == 1 && std::abs(dx) == 1) {
+	//		firstMove = false;
+	//		return true;
+	//	}
+	//}
 
-	return false;
+	//return false;
 }

@@ -4,6 +4,6 @@ class Rook :
     public Piece
 {
 public:
-    Rook(bool white);
+    Rook(bool white, int x, int y);
 };
 

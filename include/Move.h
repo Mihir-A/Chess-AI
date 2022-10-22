@@ -1,12 +1,16 @@
 #pragma once
-#include "Spot.h"
+#include "Piece.h"
 class Move
 {
 private:
-	const Spot &start, &end;
+	const Piece *p;
+	int oldX, oldY, newX, newY;
 public:
-	Move(Spot startS, Spot endS);
-	const Spot& getStart();
-	const Spot& getEnd();
+	Move(const Piece* p, int oldX, int oldY, int newX, int newY);
+	const Piece* getPiece();
+	int getOldX();
+	int getOldY();
+	int getNewX();
+	int getNewY();
 };
 

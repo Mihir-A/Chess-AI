@@ -1,8 +1,7 @@
 #include "King.h"
-#include "Spot.h"
 #include <iostream>
-King::King(bool white) 
-	: Piece(white) 
+King::King(bool white, int x, int y) 
+	: Piece(white, x, y) 
 {
 	if (white) 
 		texture.loadFromFile("assets/piece/wk.png");
@@ -11,15 +10,15 @@ King::King(bool white)
 		texture.loadFromFile("assets/piece/bk.png");
 }
 
-bool King::canMove(const Spot& o, const Spot& n, const Board& b) const
+bool King::canMove(int atemptX, int atemptY, const Board& b) const
 {
-	if (Piece::canMove(o, n, b) == false)
-		return false;
+	//if (Piece::canMove(atemptX, atemptY, b) == false)
+		return true;
 
-	const int dx = std::abs(o.getX() - n.getX());
-	const int dy = std::abs(o.getY() - n.getY());
+	//const int dx = std::abs(getX() - n.getX());
+	//const int dy = std::abs(getY() - n.getY());
 
 	
 
-	return (dy <= 1 && dx <= 1);
+	
 }

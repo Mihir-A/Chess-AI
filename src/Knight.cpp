@@ -1,7 +1,6 @@
 #include "Knight.h"
-#include "Spot.h"
-Knight::Knight(bool white)
-	: Piece(white)
+Knight::Knight(bool white, int x, int y)
+	: Piece(white, x, y)
 {
 	if (white)
 		texture.loadFromFile("assets/piece/wn.png");
@@ -10,17 +9,13 @@ Knight::Knight(bool white)
 		texture.loadFromFile("assets/piece/bn.png");
 }
 
-bool Knight::canMove(const Spot& o, const Spot& n, const Board& b) const
+bool Knight::canMove(int atemptX, int atemptY, const Board& b) const
 {
-	if (Piece::canMove(o, n, b) == false)
-		return false;
+	//if (Piece::canMove(o, n, b) == false)
+		return true;
 
-	const int dx = std::abs(o.getX() - n.getX());
-	const int dy = std::abs(o.getY() - n.getY());
+//	const int dx = std::abs(o.getX() - n.getX());
+	//const int dy = std::abs(o.getY() - n.getY());
 
-	return (dx == 2 && dy == 1 || dx == 1 && dy == 2);
-}
-
-void Knight::getPossibleMoves(std::vector<Move>& moves) const {
-
+//	return (dx == 2 && dy == 1 || dx == 1 && dy == 2);
 }

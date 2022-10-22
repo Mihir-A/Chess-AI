@@ -4,8 +4,7 @@ class Knight :
     public Piece
 {
 public:
-    Knight(bool white);
-    bool canMove(const Spot& o, const Spot& n, const Board& b) const;
-    void getPossibleMoves(std::vector<Move>& moves) const;
+    Knight(bool white, int x, int y);
+    bool canMove(int atemptX, int atemptY, const Board& b) const;
 };
 

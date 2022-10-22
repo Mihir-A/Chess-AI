@@ -4,6 +4,6 @@ class Bishop :
     public Piece
 {
 public:
-    Bishop(bool white);
+    Bishop(bool white, int x, int y);
 };
 

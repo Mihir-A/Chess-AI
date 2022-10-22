@@ -29,10 +29,10 @@ void Game::play()
                 const int xCord = event.mouseButton.x / (windowSize / 8);
                 const int yCord = event.mouseButton.y / (windowSize / 8);
 
-                if (board.getSpot(xCord, yCord).getPiece() != nullptr) {
+                if (board.getPiece(xCord, yCord) != nullptr) {
                     held = true;
                     //Finds piece that the mouse is over when it clicks
-                    heldSpot = board.getSpot(xCord, yCord);
+                    heldPiece = board.getPiece(xCord, yCord);
                 }
             }
             else if (event.type == sf::Event::MouseButtonReleased && held == true) {
@@ -41,11 +41,11 @@ void Game::play()
                 const int xCord = event.mouseButton.x / (windowSize / 8);
                 const int yCord = event.mouseButton.y / (windowSize / 8);
                 held = false;
-                if (xCord < 8 && xCord > -1 && yCord < 8 && yCord > -1){
-                    const Spot& attemptedMove = board.getSpot(xCord, yCord);
 
-                    if (heldSpot.getPiece()->canMove(heldSpot, attemptedMove, board)) {
-                        makeMove(Move(heldSpot, attemptedMove));
+                if (xCord < 8 && xCord > -1 && yCord < 8 && yCord > -1){
+
+                    if (heldPiece->canMove(xCord, yCord, board)) {
+                        makeMove(Move(heldPiece, heldPiece->getX(), heldPiece->getY(), xCord, yCord));
                     }
                 }
             }
@@ -96,16 +96,16 @@ void Game::draw()
     {
         for (int j = 0; j < 8; j++)
         {
-            if (board.getSpot(j, i).getPiece() != nullptr) {
-                if (board.getSpot(j, i).getPiece() == heldSpot.getPiece() && held == true) {
+            if (board.getPiece(j, i) != nullptr) {
+                if (board.getPiece(j, i) == heldPiece && held == true) {
                     //This sets position of the held piece
                     const int offset = 50;
-                    heldSprite.setTexture(heldSpot.getPiece()->getTexture());
+                    heldSprite.setTexture(heldPiece->getTexture());
                     heldSprite.setPosition(sf::Mouse::getPosition(window).x * 800.0f / windowSize - offset, sf::Mouse::getPosition(window).y * 800.0f / windowSize - offset);
                 }
                 else {
                     sf::Sprite s;
-                    s.setTexture(board.getSpot(j, i).getPiece()->getTexture());
+                    s.setTexture(board.getPiece(j, i)->getTexture());
                     s.setPosition(gSize * j, gSize * i);
                     window.draw(s);
                 }
@@ -121,9 +121,7 @@ void Game::draw()
 
 
 void Game::makeMove(Move s) {
-    const Spot& start = s.getStart();
-    const Spot& end = s.getEnd();
 
-    board.setPiece(end.getX(), end.getY(), start.getPiece());
-    board.setPiece(start.getX(), start.getY(), nullptr);
+    board.setPiece(s.getNewX(), s.getNewY(), s.getOldX(), s.getOldY());
+    board.setPieceNull(s.getOldX(), s.getOldY());
 }

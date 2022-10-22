@@ -1,8 +1,8 @@
 #include "Piece.h"
-#include "Spot.h"
-
-Piece::Piece(bool white)
+Piece::Piece(bool white, int x, int y)
 {
+    this->x = x;
+    this->y = y;
     this->white = white;
 }
 
@@ -11,9 +11,9 @@ bool Piece::isWhite() const
     return white;
 }
 
-bool Piece::canMove(const Spot& o, const Spot& n, const Board& b) const
+bool Piece::canMove(int atemptX, int atemptY, const Board& b) const
 {
-    if (o.getPiece() == nullptr)
+    /*if (o.getPiece() == nullptr)
         return false;
     if (n.getPiece() != nullptr) {
         if (o.getPiece()->isWhite() == n.getPiece()->isWhite()) {
@@ -24,7 +24,7 @@ bool Piece::canMove(const Spot& o, const Spot& n, const Board& b) const
     else if (o.getX() == n.getX() && o.getY() == n.getY()) {
         //checks if pieces are on the same location
         return false;
-    }
+    }*/
     return true;
 }
 
@@ -32,3 +32,16 @@ bool Piece::canMove(const Spot& o, const Spot& n, const Board& b) const
 {
     return texture;
 }
+
+ int Piece::getX() const {
+     return x;
+ }
+
+ int Piece::getY() const {
+     return y;
+ }
+
+ void Piece::moveTo(int xCord, int yCord) {
+     this->x = xCord;
+     this->y = yCord;
+ }

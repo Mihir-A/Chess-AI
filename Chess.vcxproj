@@ -168,7 +168,6 @@
     <ClCompile Include="src\King.cpp" />
     <ClCompile Include="src\Board.cpp" />
     <ClCompile Include="src\Game.cpp" />
-    <ClCompile Include="src\Spot.cpp" />
     <ClCompile Include="src\Piece.cpp" />
     <ClCompile Include="src\main.cpp" />
   </ItemGroup>
@@ -177,7 +176,6 @@
     <ClInclude Include="include\Board.h" />
     <ClInclude Include="include\Game.h" />
     <ClInclude Include="include\Piece.h" />
-    <ClInclude Include="include\Spot.h" />
     <ClInclude Include="include\King.h" />
     <ClInclude Include="include\Queen.h" />
     <ClInclude Include="include\Knight.h" />

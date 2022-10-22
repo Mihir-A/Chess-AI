@@ -1,14 +1,15 @@
 #pragma once
 #include <vector>
 #include <array>
-#include "Spot.h"
+#include "Piece.h"
 class Board
 {
 private:
-	std::array<std::array<Spot, 8>, 8> b;
+	std::array<std::array<Piece*, 8>, 8> b;
 public:
 	Board();
-	const Spot& getSpot(int x, int y) const;
-	void setPiece(int x, int y, Piece* p);
+	const Piece* getPiece(int x, int y) const;
+	void setPiece(int newX, int newY, int origX, int origY);
+	void setPieceNull(int x, int y);
 };
 

@@ -6,7 +6,7 @@ class Pawn :
 private:
     mutable bool firstMove;
 public:
-    Pawn(bool white);
-    bool canMove(const Spot& o, const Spot& n, const Board& b) const;
+    Pawn(bool white, int x, int y);
+    bool canMove(int atemptX, int atemptY, const Board& b) const;
 };
 

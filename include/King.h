@@ -6,6 +6,6 @@ class King :
 public:
     King(bool white, int x, int y);
     bool canMove(int atemptX, int atemptY, const Board& b) const;
-    virtual void getPossibleMoves(std::vector<Move>& moves) const;
+    void getPossibleMoves(std::vector<Move>& moves, const Board& b) const;
 };
 

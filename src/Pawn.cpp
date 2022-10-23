@@ -1,5 +1,5 @@
 #include "Pawn.h"
-#include "Piece.h"
+#include "Board.h"
 
 Pawn::Pawn(bool white, int x, int y)
 	: Piece(white, x, y)
@@ -49,4 +49,26 @@ bool Pawn::canMove(int atemptX, int atemptY, const Board& b) const
 	//}
 
 	//return false;
+}
+
+void Pawn::moveTo(int xCord, int yCord) {
+	Piece::moveTo(xCord, yCord);
+	firstMove = false;
+}
+
+void Pawn::getPossibleMoves(std::vector<Move>& moves, const Board& b) const {
+	const int yDir = white ? -1 : 1;
+
+	if (onBoard(y + yDir * 2)) {
+		if (b.getPiece(x, y + yDir * 2) == nullptr && firstMove) {
+			moves.emplace_back(this, x, y, x, y + yDir * 2);
+		}
+	}
+	if (onBoard(y + yDir)) {
+		if (b.getPiece(x, y + yDir) == nullptr) {
+			moves.emplace_back(this, x, y, x, y + yDir);
+		}
+
+
+	}
 }

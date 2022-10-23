@@ -11,6 +11,7 @@ protected:
 	int x;
 	int y;
 	bool dead;
+	bool onBoard(int p) const;
 public:
 	Piece(bool white, int x, int y);
 	int getX() const;
@@ -21,6 +22,6 @@ public:
 	bool isWhite() const;
 	const sf::Texture& getTexture() const;
 	virtual bool canMove(int atemptX, int atemptY, const Board& b) const;
-	virtual void getPossibleMoves(std::vector<Move>& moves) const = 0;
+	virtual void getPossibleMoves(std::vector<Move>& moves, const Board& b) const = 0;
 };
 

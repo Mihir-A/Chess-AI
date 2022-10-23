@@ -5,5 +5,6 @@ class Queen :
 {
 public:
     Queen(bool white, int x, int y);
+    void getPossibleMoves(std::vector<Move>& moves, const Board& b) const;
 };
 

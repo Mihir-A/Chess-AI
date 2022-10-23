@@ -47,10 +47,17 @@ bool Piece::canMove(int atemptX, int atemptY, const Board& b) const
      this->y = yCord;
  }
 
- bool Piece::isDead() const{
+ bool Piece::isDead() const
+ {
      return dead;
  }
 
- void Piece::kill() {
+ void Piece::kill() 
+ {
      dead = true;
  }
+
+ bool Piece::onBoard(int p) const
+ {
+     return (p > -1 && p < 8);
+}

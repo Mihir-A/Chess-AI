@@ -9,3 +9,7 @@ Bishop::Bishop(bool white, int x, int y)
 	else
 		texture.loadFromFile("assets/piece/bb.png");
 }
+
+void Bishop::getPossibleMoves(std::vector<Move>& moves, const Board& b) const {
+
+}

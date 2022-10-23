@@ -5,5 +5,6 @@ class Rook :
 {
 public:
     Rook(bool white, int x, int y);
+    void getPossibleMoves(std::vector<Move>& moves, const Board& b) const;
 };
 

@@ -22,3 +22,7 @@ bool King::canMove(int atemptX, int atemptY, const Board& b) const
 
 	
 }
+
+void King::getPossibleMoves(std::vector<Move>& moves)const {
+
+}

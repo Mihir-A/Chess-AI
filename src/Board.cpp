@@ -51,6 +51,10 @@ const Piece* Board::getPiece(int x, int y) const
 
 void Board::setPiece(int newX, int newY, int origX, int origY)
 {
+	if (b[newY][newX] != nullptr) {
+		b[newY][newX]->kill();
+	}
+
 	b[newY][newX] = b[origY][origX];
 	b[newY][newX]->moveTo(newX, newY);
 }

@@ -9,8 +9,17 @@ Game::Game()
 	window.create(sf::VideoMode(windowSize, windowSize), "Chess", sf::Style::Titlebar + sf::Style::Close + sf::Style::Resize);
     grid.setSize(sf::Vector2f(windowSize / 8.0f, windowSize / 8.0f));
     grid.setFillColor(sf::Color(181, 136, 99));// Tan color of the board
-    held = false;
+    heldPiece = nullptr;
     
+    whitePieces.reserve(16);
+    blackPieces.reserve(16);
+    for (int i = 0; i < 2; i++) {
+        for (int j = 0; j < 8; j++) {
+            whitePieces.push_back(board.getPiece(j, i + 6));
+            blackPieces.push_back(board.getPiece(j, i));
+        }
+    }
+    whiteTurn = true;
 }
 
 void Game::play()
@@ -30,24 +39,24 @@ void Game::play()
                 const int yCord = event.mouseButton.y / (windowSize / 8);
 
                 if (board.getPiece(xCord, yCord) != nullptr) {
-                    held = true;
                     //Finds piece that the mouse is over when it clicks
                     heldPiece = board.getPiece(xCord, yCord);
                 }
             }
-            else if (event.type == sf::Event::MouseButtonReleased && held == true) {
+            else if (event.type == sf::Event::MouseButtonReleased && heldPiece != nullptr) {
 
                 //X and Y cordinates of the grid where the mouse is clicked
                 const int xCord = event.mouseButton.x / (windowSize / 8);
                 const int yCord = event.mouseButton.y / (windowSize / 8);
-                held = false;
 
                 if (xCord < 8 && xCord > -1 && yCord < 8 && yCord > -1){
 
-                    if (heldPiece->canMove(xCord, yCord, board)) {
+                    if (heldPiece->canMove(xCord, yCord, board) && heldPiece->isWhite() == whiteTurn) {
                         makeMove(Move(heldPiece, heldPiece->getX(), heldPiece->getY(), xCord, yCord));
+                        whiteTurn = !whiteTurn;
                     }
                 }
+                heldPiece = nullptr;
             }
 
             //Makes sure the window is always a square
@@ -60,9 +69,6 @@ void Game::play()
                 window.setSize(sf::Vector2u(windowSize, windowSize));
             }
 
-            if (held == true) {
-                //std::cout << heldPiece.getX() << " " << heldPiece.getY() << '\n';
-            }
             //std::cout << sf::Mouse::getPosition(window).x << " y: " << sf::Mouse::getPosition(window).y << " windowx: " << window.getSize().x << " y: " << window.getSize().y << '\n';
             draw();
         }
@@ -97,7 +103,7 @@ void Game::draw()
         for (int j = 0; j < 8; j++)
         {
             if (board.getPiece(j, i) != nullptr) {
-                if (board.getPiece(j, i) == heldPiece && held == true) {
+                if (board.getPiece(j, i) == heldPiece && heldPiece != nullptr) {
                     //This sets position of the held piece
                     const int offset = 50;
                     heldSprite.setTexture(heldPiece->getTexture());
@@ -120,8 +126,15 @@ void Game::draw()
 }
 
 
-void Game::makeMove(Move s) {
-
+void Game::makeMove(Move s) 
+{
     board.setPiece(s.getNewX(), s.getNewY(), s.getOldX(), s.getOldY());
     board.setPieceNull(s.getOldX(), s.getOldY());
+}
+
+void Game::getMoves() {
+    std::vector<Move>& playerMoves = whiteTurn ? whiteMoves : blackMoves;
+    for (auto piece : whitePieces) {
+        piece->getPossibleMoves(playerMoves);
+    }
 }

@@ -4,6 +4,7 @@ Piece::Piece(bool white, int x, int y)
     this->x = x;
     this->y = y;
     this->white = white;
+    dead = false;
 }
 
 bool Piece::isWhite() const
@@ -44,4 +45,12 @@ bool Piece::canMove(int atemptX, int atemptY, const Board& b) const
  void Piece::moveTo(int xCord, int yCord) {
      this->x = xCord;
      this->y = yCord;
+ }
+
+ bool Piece::isDead() const{
+     return dead;
+ }
+
+ void Piece::kill() {
+     dead = true;
  }

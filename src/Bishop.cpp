@@ -1,4 +1,5 @@
 #include "Bishop.h"
+#include "Move.h"
 #include <iostream>
 Bishop::Bishop(bool white, int x, int y)
 	: Piece(white, x, y)

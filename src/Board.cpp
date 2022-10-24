@@ -5,6 +5,7 @@
 #include "Bishop.h"
 #include "Rook.h"
 #include "Pawn.h"
+#include "Move.h"
 
 Board::Board()
 {
@@ -39,8 +40,6 @@ Board::Board()
 	for (int i = 0; i < 8; i++) {
 		b[1][i] = new Pawn(false, i, 1);
 		b[6][i] = new Pawn(true, i, 6);
-		//b[1][i] = Spot(i, 1, new Pawn(false));
-		//b[6][i] = Spot(i, 6, new Pawn(true));
 	}
 }
 
@@ -57,6 +56,17 @@ void Board::setPiece(int newX, int newY, int origX, int origY)
 
 	b[newY][newX] = b[origY][origX];
 	b[newY][newX]->moveTo(newX, newY);
+}
+
+void Board::makeMove(const Move& m) {
+	if (b[m.getNewY()][m.getNewX()] != nullptr) {
+		b[m.getNewY()][m.getNewX()]->kill();
+	}
+
+	b[m.getNewY()][m.getNewX()] = (Piece*) m.getPiece();
+	b[m.getNewY()][m.getNewX()]->moveTo(m.getNewX(), m.getNewY());
+
+	b[m.getOldY()][m.getOldX()] = nullptr;
 }
 
 void Board::setPieceNull(int x, int y)

@@ -1,4 +1,6 @@
 #include "Knight.h"
+#include "Move.h"
+
 Knight::Knight(bool white, int x, int y)
 	: Piece(white, x, y)
 {

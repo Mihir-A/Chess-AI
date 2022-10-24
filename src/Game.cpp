@@ -1,6 +1,7 @@
 #include "Game.h"
 #include "Piece.h"
-#include<iostream>
+#include <algorithm>
+#include <iostream>
 
 Game::Game()
 {
@@ -20,6 +21,7 @@ Game::Game()
         }
     }
     whiteTurn = true;
+    getMoves();
 }
 
 void Game::play()
@@ -51,9 +53,12 @@ void Game::play()
 
                 if (xCord < 8 && xCord > -1 && yCord < 8 && yCord > -1){
 
-                    if (heldPiece->canMove(xCord, yCord, board) && heldPiece->isWhite() == whiteTurn) {
-                        makeMove(Move(heldPiece, heldPiece->getX(), heldPiece->getY(), xCord, yCord));
+                    Move attemptedMove = Move(heldPiece, heldPiece->getX(), heldPiece->getY(), xCord, yCord);
+                    
+                    if (canMove(attemptedMove) && heldPiece->isWhite() == whiteTurn) {
+                        board.makeMove(attemptedMove);
                         whiteTurn = !whiteTurn;
+                        getMoves();
                     }
                 }
                 heldPiece = nullptr;
@@ -128,13 +133,29 @@ void Game::draw()
 
 void Game::makeMove(Move s) 
 {
-    board.setPiece(s.getNewX(), s.getNewY(), s.getOldX(), s.getOldY());
-    board.setPieceNull(s.getOldX(), s.getOldY());
+    
 }
 
-void Game::getMoves() {
+void Game::getMoves() 
+{
     std::vector<Move>& playerMoves = whiteTurn ? whiteMoves : blackMoves;
-    for (auto piece : whitePieces) {
-        piece->getPossibleMoves(playerMoves);
+    const std::vector<const Piece*>& playerPieces = whiteTurn ? whitePieces : blackPieces;
+
+    playerMoves.clear();
+    for (auto piece : playerPieces) {
+        piece->getPossibleMoves(playerMoves, board);
     }
+}
+
+bool Game::canMove(const Move& m) 
+{
+    const std::vector<Move>& posibleMoves = whiteTurn ? whiteMoves : blackMoves;
+
+    for (const Move& move : posibleMoves) {
+        if (m == move) {
+            return true;
+        }
+    }
+
+    return false;
 }

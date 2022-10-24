@@ -1,6 +1,8 @@
 #include "King.h"
+#include "Move.h"
 #include "Board.h"
 #include <iostream>
+
 King::King(bool white, int x, int y) 
 	: Piece(white, x, y) 
 {

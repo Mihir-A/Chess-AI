@@ -16,7 +16,7 @@ public:
 	Piece(bool white, int x, int y);
 	int getX() const;
 	int getY() const;
-	void moveTo(int xCord, int yCord);
+	virtual void moveTo(int xCord, int yCord);
 	bool isDead() const;
 	void kill();
 	bool isWhite() const;

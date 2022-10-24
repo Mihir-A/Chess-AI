@@ -1,4 +1,5 @@
 #include "Rook.h"
+#include "Move.h"
 #include <iostream>
 Rook::Rook(bool white, int x, int y)
 	: Piece(white, x, y)
@@ -8,4 +9,8 @@ Rook::Rook(bool white, int x, int y)
 
 	else
 		texture.loadFromFile("assets/piece/br.png");
+}
+
+void Rook::getPossibleMoves(std::vector<Move>& moves, const Board& b) const {
+
 }

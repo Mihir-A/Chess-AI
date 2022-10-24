@@ -9,23 +9,31 @@ Move::Move(const Piece* p, int oldX, int oldY, int newX, int newY)
 	this->newY = newY;
 }
 
-const Piece* Move::getPiece()
+const Piece* Move::getPiece() const
 {
 	return p;
 }
 
-int Move::getOldX() {
+int Move::getOldX() const 
+{
 	return oldX;
 }
 
-int Move::getOldY() {
+int Move::getOldY() const
+{
 	return oldY;
 }
 
-int Move::getNewY() {
+int Move::getNewY() const 
+{
 	return newY;
 }
 
-int Move::getNewX() {
+int Move::getNewX() const 
+{
 	return newX;
+}
+
+bool Move::operator==(const Move& other) const {
+	return(other.newX == newX && other.newY == newY && other.oldX == oldX && other.oldY == oldY && other.p == p);
 }

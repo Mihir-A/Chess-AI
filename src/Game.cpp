@@ -130,12 +130,6 @@ void Game::draw()
     window.display();
 }
 
-
-void Game::makeMove(Move s) 
-{
-    
-}
-
 void Game::getMoves() 
 {
     std::vector<Move>& playerMoves = whiteTurn ? whiteMoves : blackMoves;
@@ -145,6 +139,13 @@ void Game::getMoves()
     for (auto piece : playerPieces) {
         piece->getPossibleMoves(playerMoves, board);
     }
+
+    std::cout << "Possible moves for " << (whiteTurn ? "White" : "Black") << ":\n";
+
+    for (const Move& a : playerMoves) {
+        std::cout << a.getPiece()->getPieceType() << " from " << a.getOldX() << " " <<  7 - a.getOldY() << " to " << a.getNewX() << " " << 7 - a.getNewY() << '\n';
+    }
+    std::cout << "\n\n\n";
 }
 
 bool Game::canMove(const Move& m) 

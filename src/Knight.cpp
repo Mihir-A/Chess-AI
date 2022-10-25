@@ -1,8 +1,9 @@
 #include "Knight.h"
 #include "Move.h"
+#include "Board.h"
 
 Knight::Knight(bool white, int x, int y)
-	: Piece(white, x, y)
+	: Piece(white, x, y, "Knight")
 {
 	if (white)
 		texture.loadFromFile("assets/piece/wn.png");
@@ -11,17 +12,36 @@ Knight::Knight(bool white, int x, int y)
 		texture.loadFromFile("assets/piece/bn.png");
 }
 
-bool Knight::canMove(int atemptX, int atemptY, const Board& b) const
+void Knight::getPossibleMoves(std::vector<Move>& moves, const Board& b) const 
 {
-	//if (Piece::canMove(o, n, b) == false)
-		return true;
+	//Tall knight moves
 
-//	const int dx = std::abs(o.getX() - n.getX());
-	//const int dy = std::abs(o.getY() - n.getY());
+	for (const int dx : { -2, 2 }) {
+		for (const int dy : { -1, 1 }) {
+			if (onBoard(x + dx) && onBoard(y + dy)) {
+				if (b.getPiece(x + dx, y + dy) == nullptr) {
+					moves.emplace_back(this, x, y, x + dx, y + dy);
+				}
+				//Checks if color of target != to the piece color
+				else if (b.getPiece(x + dx, y + dy)->isWhite() != white) {
+					moves.emplace_back(this, x, y, x + dx, y + dy);
+				}
+			}
+		}
+	}
 
-//	return (dx == 2 && dy == 1 || dx == 1 && dy == 2);
-}
-
-void Knight::getPossibleMoves(std::vector<Move>& moves, const Board& b) const {
-
+	//Wide knight moves
+	for (const int dx : { -1, 1 }) {
+		for (const int dy : { -2, 2 }) {
+			if (onBoard(x + dx) && onBoard(y + dy)) {
+				if (b.getPiece(x + dx, y + dy) == nullptr) {
+					moves.emplace_back(this, x, y, x + dx, y + dy);
+				}
+				//Checks if color of target != to the piece color
+				else if (b.getPiece(x + dx, y + dy)->isWhite() != white) {
+					moves.emplace_back(this, x, y, x + dx, y + dy);
+				}
+			}
+		}
+	}
 }

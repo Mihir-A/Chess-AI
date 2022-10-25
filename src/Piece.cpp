@@ -1,6 +1,5 @@
 #include "Piece.h"
 
-//this constructor should only be called by subclasses to initilize name
 Piece::Piece(bool white, int x, int y, const std::string& name)
     :tName(name)
 {
@@ -8,6 +7,8 @@ Piece::Piece(bool white, int x, int y, const std::string& name)
     this->y = y;
     this->white = white;
     dead = false;
+    this->texture.setSmooth(true);
+    
 }
 
 bool Piece::isWhite() const

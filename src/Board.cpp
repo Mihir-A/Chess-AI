@@ -37,20 +37,22 @@ Board::Board()
 	b[7][0] = new Rook(true, 0, 7);
 	b[7][7] = new Rook(true, 7, 7);
 
-	for (int i = 0; i < 8; i++) {
+	for (int i = 0; i < 8; i++)
+	{
 		b[1][i] = new Pawn(false, i, 1);
 		b[6][i] = new Pawn(true, i, 6);
 	}
 }
 
-const Piece* Board::getPiece(int x, int y) const
+const Piece *Board::getPiece(int x, int y) const
 {
 	return b[y][x];
 }
 
 void Board::setPiece(int newX, int newY, int origX, int origY)
 {
-	if (b[newY][newX] != nullptr) {
+	if (b[newY][newX] != nullptr)
+	{
 		b[newY][newX]->kill();
 	}
 
@@ -58,12 +60,14 @@ void Board::setPiece(int newX, int newY, int origX, int origY)
 	b[newY][newX]->moveTo(newX, newY);
 }
 
-void Board::makeMove(const Move& m) {
-	if (b[m.getNewY()][m.getNewX()] != nullptr) {
+void Board::makeMove(const Move &m)
+{
+	if (b[m.getNewY()][m.getNewX()] != nullptr)
+	{
 		b[m.getNewY()][m.getNewX()]->kill();
 	}
 
-	b[m.getNewY()][m.getNewX()] = (Piece*) m.getPiece();
+	b[m.getNewY()][m.getNewX()] = (Piece *)m.getPiece();
 	b[m.getNewY()][m.getNewX()]->moveTo(m.getNewX(), m.getNewY());
 
 	b[m.getOldY()][m.getOldX()] = nullptr;

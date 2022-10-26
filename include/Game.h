@@ -11,11 +11,12 @@ class Game
 public:
 	Game();
 	void play();
+
 private:
 	void draw();
 	void makeMove(Move s);
 	void getMoves();
-	bool canMove(const Move& m);
+	bool canMove(const Move &m);
 	unsigned int windowSize;
 	sf::RenderWindow window;
 	Board board;
@@ -24,7 +25,6 @@ private:
 	bool whiteTurn;
 	std::vector<Move> whiteMoves;
 	std::vector<Move> blackMoves;
-	std::vector<const Piece*> whitePieces;
-	std::vector<const Piece*> blackPieces;
+	std::vector<const Piece *> whitePieces;
+	std::vector<const Piece *> blackPieces;
 };
-

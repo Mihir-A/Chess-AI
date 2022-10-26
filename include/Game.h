@@ -20,8 +20,10 @@ private:
 	unsigned int windowSize;
 	sf::RenderWindow window;
 	Board board;
-	sf::RectangleShape grid;
+	sf::RectangleShape brownSquare;
+	sf::RectangleShape yellowSquare;
 	const Piece *heldPiece;
+	const Piece *recentPiece;
 	bool whiteTurn;
 	std::vector<Move> whiteMoves;
 	std::vector<Move> blackMoves;

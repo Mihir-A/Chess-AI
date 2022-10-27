@@ -4,7 +4,7 @@ Move::Move(const Piece* newPiece, const Piece* oldPiece, int oldX, int oldY, int
     : newPiece(newPiece), oldPiece(oldPiece), oldX(oldX), oldY(oldY), newX(newX), newY(newY)
 {}
 
-const Piece *Move::getNewPiece() const
+const Piece* Move::getNewPiece() const
 {
     return newPiece;
 }
@@ -33,7 +33,6 @@ int Move::getNewX() const
 {
     return newX;
 }
-
 
 
 bool Move::operator==(const Move &other) const

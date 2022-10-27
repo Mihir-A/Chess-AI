@@ -9,10 +9,8 @@
 
 Board::Board()
 {
-    for (int i = 2; i < 6; i++)
-    {
-        for (int j = 0; j < 8; j++)
-        {
+    for (int i = 2; i < 6; i++) {
+        for (int j = 0; j < 8; j++) {
             this->b[i][j] = nullptr;
         }
     }
@@ -37,22 +35,29 @@ Board::Board()
     b[7][0] = new Rook(true, 0, 7);
     b[7][7] = new Rook(true, 7, 7);
 
-    for (int i = 0; i < 8; i++)
-    {
+    for (int i = 0; i < 8; i++) {
         b[1][i] = new Pawn(false, i, 1);
         b[6][i] = new Pawn(true, i, 6);
     }
+
+    whitePieces.reserve(16);
+    blackPieces.reserve(16);
+    for (int i = 0; i < 2; i++) {
+        for (int j = 0; j < 8; j++) {
+            whitePieces.push_back(getPiece(j, i + 6));
+            blackPieces.push_back(getPiece(j, i));
+        }
+    }
 }
 
-const Piece *Board::getPiece(unsigned int x, unsigned int y) const
+const Piece* Board::getPiece(unsigned int x, unsigned int y) const
 {
     return b[y][x];
 }
 
 void Board::makeMove(const Move &m)
 {
-    if (b[m.getNewY()][m.getNewX()] != nullptr)
-    {
+    if (b[m.getNewY()][m.getNewX()] != nullptr) {
         b[m.getNewY()][m.getNewX()]->kill();
     }
 
@@ -64,8 +69,16 @@ void Board::makeMove(const Move &m)
 }
 
 void Board::unmakeMove(const Move &m)
+{ }
+
+const std::vector<const Piece *>& Board::getWhitePieces() const
 {
-    
+    return whitePieces;
+}
+
+const std::vector<const Piece *>& Board::getBlackPieces() const
+{
+    return blackPieces;
 }
 
 void Board::setPieceNull(int x, int y)

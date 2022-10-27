@@ -16,7 +16,7 @@ bool Piece::isWhite() const
     return white;
 }
 
-const sf::Texture &Piece::getTexture() const
+const sf::Texture& Piece::getTexture() const
 {
     return texture;
 }
@@ -52,7 +52,7 @@ bool Piece::onBoard(int p)
     return (p > -1 && p < 8);
 }
 
-const std::string &Piece::getPieceType() const
+const std::string& Piece::getPieceType() const
 {
     return tName;
 }

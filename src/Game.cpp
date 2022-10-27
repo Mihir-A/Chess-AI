@@ -15,51 +15,35 @@ Game::Game()
     recentPiece = nullptr;
 
     playedMoves.reserve(10);
-    whitePieces.reserve(16);
-    blackPieces.reserve(16);
-    for (int i = 0; i < 2; i++)
-    {
-        for (int j = 0; j < 8; j++)
-        {
-            whitePieces.push_back(board.getPiece(j, i + 6));
-            blackPieces.push_back(board.getPiece(j, i));
-        }
-    }
+
     whiteTurn = true;
     getMoves();
 }
 
 void Game::play()
 {
-    while (window.isOpen())
-    {
+    while (window.isOpen()) {
         sf::Event event;
-        while (window.pollEvent(event))
-        {
+        while (window.pollEvent(event)) {
             // Close window: exit
-            if (event.type == sf::Event::Closed)
-            {
+            if (event.type == sf::Event::Closed) {
                 window.close();
             }
 
-            else if (event.type == sf::Event::MouseButtonPressed)
-            {
+            else if (event.type == sf::Event::MouseButtonPressed) {
                 // X and Y coordinates of the grid where the mouse is clicked
                 const unsigned int xCord = event.mouseButton.x / (windowSize / 8);
                 const unsigned int yCord = event.mouseButton.y / (windowSize / 8);
 
-                if (board.getPiece(xCord, yCord) != nullptr && board.getPiece(xCord, yCord)->isWhite() == whiteTurn)
-                {
+                if (board.getPiece(xCord, yCord) != nullptr && board.getPiece(xCord, yCord)->isWhite() == whiteTurn) {
                     //Finds piece that the mouse is over when it clicks
                     heldPiece = board.getPiece(xCord, yCord);
                 }
-                else if (recentPiece != nullptr)
-                {
+                else if (recentPiece != nullptr) {
                     //This runs if a piece is already selected and wants to move to the space
                     auto attemptedMove = Move(recentPiece, board.getPiece(xCord, yCord), recentPiece->getX(), recentPiece->getY(), xCord, yCord);
 
-                    if (canMove(attemptedMove) && recentPiece->isWhite() == whiteTurn)
-                    {
+                    if (canMove(attemptedMove) && recentPiece->isWhite() == whiteTurn) {
                         board.makeMove(attemptedMove);
                         whiteTurn = !whiteTurn;
                         getMoves();
@@ -67,28 +51,23 @@ void Game::play()
                     }
                 }
             }
-            else if (event.type == sf::Event::MouseButtonReleased && heldPiece != nullptr)
-            {
+            else if (event.type == sf::Event::MouseButtonReleased && heldPiece != nullptr) {
                 // X and Y coordinate of the grid where the mouse is clicked
                 const int xCord = event.mouseButton.x / (windowSize / 8);
                 const int yCord = event.mouseButton.y / (windowSize / 8);
 
-                if (xCord < 8 && xCord > -1 && yCord < 8 && yCord > -1)
-                {
-                    if (heldPiece == recentPiece)
-                    {
+                if (xCord < 8 && xCord > -1 && yCord < 8 && yCord > -1) {
+                    if (heldPiece == recentPiece) {
                         //If a piece has been clicked twice deselect it
                         recentPiece = nullptr;
                     }
-                    else
-                    {
+                    else {
                         recentPiece = heldPiece;
                     }
 
-                    const Move attemptedMove = Move(heldPiece, board.getPiece(xCord, yCord), heldPiece->getX(), heldPiece->getY(), xCord, yCord);
+                    const auto attemptedMove = Move(heldPiece, board.getPiece(xCord, yCord), heldPiece->getX(), heldPiece->getY(), xCord, yCord);
 
-                    if (canMove(attemptedMove))
-                    {
+                    if (canMove(attemptedMove)) {
                         board.makeMove(attemptedMove);
                         playedMoves.push_back(attemptedMove);
                         whiteTurn = !whiteTurn;
@@ -100,13 +79,11 @@ void Game::play()
             }
 
             // Makes sure the window is always a square
-            if (window.getSize().x != windowSize)
-            {
+            if (window.getSize().x != windowSize) {
                 windowSize = window.getSize().x;
                 window.setSize(sf::Vector2u(windowSize, windowSize));
             }
-            else if (window.getSize().y != windowSize)
-            {
+            else if (window.getSize().y != windowSize) {
                 windowSize = window.getSize().y;
                 window.setSize(sf::Vector2u(windowSize, windowSize));
             }
@@ -123,20 +100,16 @@ void Game::draw()
     brownSquare.setPosition(gSize, 0.0f);
 
     //Draws the grid tiles
-    for (int i = 0; i < 8; i++)
-    {
-        for (int j = 0; j < 4; j++)
-        {
+    for (int i = 0; i < 8; i++) {
+        for (int j = 0; j < 4; j++) {
             window.draw(brownSquare);
             brownSquare.move(gSize * 2, 0.0f);
         }
 
-        if (i % 2 == 0)
-        {
+        if (i % 2 == 0) {
             brownSquare.setPosition(0.0f, gSize * (i + 1));
         }
-        else
-        {
+        else {
             brownSquare.setPosition(gSize, gSize * (i + 1));
         }
     }
@@ -144,14 +117,10 @@ void Game::draw()
     sf::Sprite heldSprite;
 
     // Draws the pieces
-    for (int i = 0; i < 8; i++)
-    {
-        for (int j = 0; j < 8; j++)
-        {
-            if (board.getPiece(j, i) != nullptr)
-            {
-                if (board.getPiece(j, i) == heldPiece && heldPiece != nullptr)
-                {
+    for (int i = 0; i < 8; i++) {
+        for (int j = 0; j < 8; j++) {
+            if (board.getPiece(j, i) != nullptr) {
+                if (board.getPiece(j, i) == heldPiece && heldPiece != nullptr) {
                     // This sets position of the held piece
                     constexpr int offset = 50;
                     heldSprite.setTexture(heldPiece->getTexture());
@@ -159,8 +128,7 @@ void Game::draw()
                     yellowSquare.setPosition(gSize * j, gSize * i);
                     window.draw(yellowSquare);
                 }
-                else if (heldPiece == nullptr && board.getPiece(j, i) == recentPiece && recentPiece != nullptr)
-                {
+                else if (heldPiece == nullptr && board.getPiece(j, i) == recentPiece && recentPiece != nullptr) {
                     yellowSquare.setPosition(gSize * j, gSize * i);
                     window.draw(yellowSquare);
                     sf::Sprite s;
@@ -168,8 +136,7 @@ void Game::draw()
                     s.setPosition(gSize * j, gSize * i);
                     window.draw(s);
                 }
-                else
-                {
+                else {
                     sf::Sprite s;
                     s.setTexture(board.getPiece(j, i)->getTexture());
                     s.setPosition(gSize * j, gSize * i);
@@ -187,21 +154,18 @@ void Game::draw()
 void Game::getMoves()
 {
     std::vector<Move> &playerMoves = whiteTurn ? whiteMoves : blackMoves;
-    const std::vector<const Piece *> &playerPieces = whiteTurn ? whitePieces : blackPieces;
+    const std::vector<const Piece *> &playerPieces = whiteTurn ? board.getWhitePieces() : board.getBlackPieces();
 
     playerMoves.clear();
-    for (const auto piece : playerPieces)
-    {
-        if (!piece->isDead())
-        {
+    for (const auto piece : playerPieces) {
+        if (!piece->isDead()) {
             piece->getPossibleMoves(playerMoves, board);
         }
     }
 
     std::cout << "Possible moves for " << (whiteTurn ? "White" : "Black") << ":\n";
 
-    for (const Move &a : playerMoves)
-    {
+    for (const Move &a : playerMoves) {
         std::cout << a.getNewPiece()->getPieceType() << " from " << a.getOldX() << " " << 7 - a.getOldY() << " to " << a.getNewX() << " " << 7 - a.getNewY() << '\n';
     }
     std::cout << "\n\n\n";
@@ -211,10 +175,8 @@ bool Game::canMove(const Move &m) const
 {
     const std::vector<Move> &possibleMoves = whiteTurn ? whiteMoves : blackMoves;
 
-    for (const Move &move : possibleMoves)
-    {
-        if (m == move)
-        {
+    for (const Move &move : possibleMoves) {
+        if (m == move) {
             return true;
         }
     }

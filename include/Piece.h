@@ -4,6 +4,7 @@
 #include <vector>
 class Board;
 class Move;
+
 class Piece
 {
 protected:
@@ -23,7 +24,7 @@ public:
     bool isDead() const;
     void kill();
     bool isWhite() const;
-    const sf::Texture &getTexture() const;
-    const std::string &getPieceType() const;
+    const sf::Texture& getTexture() const;
+    const std::string& getPieceType() const;
     virtual void getPossibleMoves(std::vector<Move> &moves, const Board &b) const = 0;
 };

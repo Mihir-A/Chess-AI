@@ -7,23 +7,23 @@ class Move;
 class Piece
 {
 protected:
-	Piece(bool white, int x, int y, const std::string &name);
-	sf::Texture texture;
-	bool white;
-	int x;
-	int y;
-	bool dead;
-	bool onBoard(int p) const;
-	const std::string tName;
+    Piece(bool white, int x, int y, const std::string &name);
+    sf::Texture texture;
+    bool white;
+    int x;
+    int y;
+    bool dead;
+    static bool onBoard(int p);
+    const std::string tName;
 
 public:
-	int getX() const;
-	int getY() const;
-	virtual void moveTo(int xCord, int yCord);
-	bool isDead() const;
-	void kill();
-	bool isWhite() const;
-	const sf::Texture &getTexture() const;
-	const std::string &getPieceType() const;
-	virtual void getPossibleMoves(std::vector<Move> &moves, const Board &b) const = 0;
+    int getX() const;
+    int getY() const;
+    virtual void moveTo(int xCord, int yCord);
+    bool isDead() const;
+    void kill();
+    bool isWhite() const;
+    const sf::Texture &getTexture() const;
+    const std::string &getPieceType() const;
+    virtual void getPossibleMoves(std::vector<Move> &moves, const Board &b) const = 0;
 };

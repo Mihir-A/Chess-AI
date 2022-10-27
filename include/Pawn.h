@@ -3,11 +3,10 @@
 class Pawn : public Piece
 {
 private:
-    mutable bool firstMove;
+    bool firstMove;
 
 public:
     Pawn(bool white, int x, int y);
-    void moveTo(int xCord, int yCord);
-    bool canMove(int atemptX, int atemptY, const Board &b) const;
-    void getPossibleMoves(std::vector<Move> &moves, const Board &b) const;
+    void moveTo(int xCord, int yCord) override;
+    void getPossibleMoves(std::vector<Move> &moves, const Board &b) const override;
 };

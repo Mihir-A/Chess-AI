@@ -1,5 +1,6 @@
 #include "Piece.h"
 
+
 Piece::Piece(bool white, int x, int y, const std::string &name)
     : tName(name)
 {
@@ -46,7 +47,7 @@ void Piece::kill()
     dead = true;
 }
 
-bool Piece::onBoard(int p) const
+bool Piece::onBoard(int p)
 {
     return (p > -1 && p < 8);
 }

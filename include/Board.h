@@ -9,8 +9,8 @@ private:
 
 public:
     Board();
-    const Piece *getPiece(int x, int y) const;
-    void setPiece(int newX, int newY, int origX, int origY);
+    const Piece* getPiece(unsigned int x, unsigned int y) const;
     void setPieceNull(int x, int y);
     void makeMove(const Move &m);
+    void unmakeMove(const Move &m);
 };

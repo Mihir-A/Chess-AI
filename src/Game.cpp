@@ -14,6 +14,7 @@ Game::Game()
     heldPiece = nullptr;
     recentPiece = nullptr;
 
+    playedMoves.reserve(10);
     whitePieces.reserve(16);
     blackPieces.reserve(16);
     for (int i = 0; i < 2; i++)
@@ -55,7 +56,7 @@ void Game::play()
                 else if (recentPiece != nullptr)
                 {
                     //This runs if a piece is already selected and wants to move to the space
-                    auto attemptedMove = Move(recentPiece, recentPiece->getX(), recentPiece->getY(), xCord, yCord);
+                    auto attemptedMove = Move(recentPiece, board.getPiece(xCord, yCord), recentPiece->getX(), recentPiece->getY(), xCord, yCord);
 
                     if (canMove(attemptedMove) && recentPiece->isWhite() == whiteTurn)
                     {
@@ -76,6 +77,7 @@ void Game::play()
                 {
                     if (heldPiece == recentPiece)
                     {
+                        //If a piece has been clicked twice deselect it
                         recentPiece = nullptr;
                     }
                     else
@@ -83,11 +85,12 @@ void Game::play()
                         recentPiece = heldPiece;
                     }
 
-                    auto attemptedMove = Move(heldPiece, heldPiece->getX(), heldPiece->getY(), xCord, yCord);
+                    const Move attemptedMove = Move(heldPiece, board.getPiece(xCord, yCord), heldPiece->getX(), heldPiece->getY(), xCord, yCord);
 
                     if (canMove(attemptedMove))
                     {
                         board.makeMove(attemptedMove);
+                        playedMoves.push_back(attemptedMove);
                         whiteTurn = !whiteTurn;
                         getMoves();
                         recentPiece = nullptr;
@@ -199,7 +202,7 @@ void Game::getMoves()
 
     for (const Move &a : playerMoves)
     {
-        std::cout << a.getPiece()->getPieceType() << " from " << a.getOldX() << " " << 7 - a.getOldY() << " to " << a.getNewX() << " " << 7 - a.getNewY() << '\n';
+        std::cout << a.getNewPiece()->getPieceType() << " from " << a.getOldX() << " " << 7 - a.getOldY() << " to " << a.getNewX() << " " << 7 - a.getNewY() << '\n';
     }
     std::cout << "\n\n\n";
 }

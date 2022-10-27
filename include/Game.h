@@ -13,7 +13,7 @@ public:
 private:
     void draw();
     void getMoves();
-    bool canMove(const Move &m);
+    bool canMove(const Move &m) const;
     unsigned int windowSize;
     sf::RenderWindow window;
     Board board;
@@ -26,4 +26,5 @@ private:
     std::vector<Move> blackMoves;
     std::vector<const Piece *> whitePieces;
     std::vector<const Piece *> blackPieces;
+    std::vector<Move> playedMoves;
 };

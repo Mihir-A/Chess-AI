@@ -28,12 +28,12 @@ void Knight::getPossibleMoves(std::vector<Move> &moves, const Board &b) const
             {
                 if (b.getPiece(x + dx, y + dy) == nullptr)
                 {
-                    moves.emplace_back(this, x, y, x + dx, y + dy);
+                    moves.emplace_back(this, b.getPiece(x + dx, y + dy), x, y, x + dx, y + dy);
                 }
                 // Checks if color of target != to the piece color
                 else if (b.getPiece(x + dx, y + dy)->isWhite() != white)
                 {
-                    moves.emplace_back(this, x, y, x + dx, y + dy);
+                    moves.emplace_back(this, b.getPiece(x + dx, y + dy),  x, y, x + dx, y + dy);
                 }
             }
         }
@@ -48,12 +48,12 @@ void Knight::getPossibleMoves(std::vector<Move> &moves, const Board &b) const
             {
                 if (b.getPiece(x + dx, y + dy) == nullptr)
                 {
-                    moves.emplace_back(this, x, y, x + dx, y + dy);
+                    moves.emplace_back(this, b.getPiece(x + dx, y + dy), x, y, x + dx, y + dy);
                 }
                 // Checks if color of target != to the piece color
                 else if (b.getPiece(x + dx, y + dy)->isWhite() != white)
                 {
-                    moves.emplace_back(this, x, y, x + dx, y + dy);
+                    moves.emplace_back(this, b.getPiece(x + dx, y + dy), x, y, x + dx, y + dy);
                 }
             }
         }

@@ -17,8 +17,7 @@ Rook::Rook(bool white, int x, int y)
 
 void Rook::getPossibleMoves(std::vector<Move> &moves, const Board &b) const
 {
-
-    // keeps stepping right
+    //Keeps stepping right
     for (int dx = 1; dx < 8; dx++)
     {
         if (!onBoard(dx + x))
@@ -27,13 +26,13 @@ void Rook::getPossibleMoves(std::vector<Move> &moves, const Board &b) const
         }
         if (b.getPiece(dx + x, y) == nullptr)
         {
-            moves.emplace_back(this, x, y, x + dx, y);
+            moves.emplace_back(this, b.getPiece(x + dx, y), x, y, x + dx, y);
         }
         else
         {
             if (b.getPiece(dx + x, y)->isWhite() != white)
             {
-                moves.emplace_back(this, x, y, x + dx, y);
+                moves.emplace_back(this, b.getPiece(x + dx, y), x, y, x + dx, y);
             }
             break;
         }
@@ -48,13 +47,13 @@ void Rook::getPossibleMoves(std::vector<Move> &moves, const Board &b) const
         }
         if (b.getPiece(dx + x, y) == nullptr)
         {
-            moves.emplace_back(this, x, y, x + dx, y);
+            moves.emplace_back(this, b.getPiece(x + dx, y), x, y, x + dx, y);
         }
         else
         {
             if (b.getPiece(dx + x, y)->isWhite() != white)
             {
-                moves.emplace_back(this, x, y, x + dx, y);
+                moves.emplace_back(this, b.getPiece(x + dx, y), x, y, x + dx, y);
             }
             break;
         }
@@ -69,13 +68,13 @@ void Rook::getPossibleMoves(std::vector<Move> &moves, const Board &b) const
         }
         if (b.getPiece(x, y + dy) == nullptr)
         {
-            moves.emplace_back(this, x, y, x, y + dy);
+            moves.emplace_back(this, b.getPiece(x, y + dy), x, y, x, y + dy);
         }
         else
         {
             if (b.getPiece(x, y + dy)->isWhite() != white)
             {
-                moves.emplace_back(this, x, y, x, y + dy);
+                moves.emplace_back(this, b.getPiece(x, y + dy), x, y, x, y + dy);
             }
             break;
         }
@@ -89,13 +88,13 @@ void Rook::getPossibleMoves(std::vector<Move> &moves, const Board &b) const
         }
         if (b.getPiece(x, y + dy) == nullptr)
         {
-            moves.emplace_back(this, x, y, x, y + dy);
+            moves.emplace_back(this, b.getPiece(x, y + dy), x, y, x, y + dy);
         }
         else
         {
             if (b.getPiece(x, y + dy)->isWhite() != white)
             {
-                moves.emplace_back(this, x, y, x, y + dy);
+                moves.emplace_back(this, b.getPiece(x, y + dy), x, y, x, y + dy);
             }
             break;
         }

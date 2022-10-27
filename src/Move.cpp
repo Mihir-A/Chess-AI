@@ -1,17 +1,17 @@
 #include "Move.h"
 
-Move::Move(const Piece *p, int oldX, int oldY, int newX, int newY)
-    : p(p)
+Move::Move(const Piece* newPiece, const Piece* oldPiece, int oldX, int oldY, int newX, int newY)
+    : newPiece(newPiece), oldPiece(oldPiece), oldX(oldX), oldY(oldY), newX(newX), newY(newY)
+{}
+
+const Piece *Move::getNewPiece() const
 {
-    this->oldX = oldX;
-    this->oldY = oldY;
-    this->newX = newX;
-    this->newY = newY;
+    return newPiece;
 }
 
-const Piece *Move::getPiece() const
+const Piece* Move::getOldPiece() const
 {
-    return p;
+    return oldPiece;
 }
 
 int Move::getOldX() const
@@ -34,7 +34,9 @@ int Move::getNewX() const
     return newX;
 }
 
+
+
 bool Move::operator==(const Move &other) const
 {
-    return (other.newX == newX && other.newY == newY && other.oldX == oldX && other.oldY == oldY && other.p == p);
+    return (other.newX == newX && other.newY == newY && other.oldX == oldX && other.oldY == oldY && other.newPiece == newPiece);
 }

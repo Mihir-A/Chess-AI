@@ -44,20 +44,9 @@ Board::Board()
     }
 }
 
-const Piece *Board::getPiece(int x, int y) const
+const Piece *Board::getPiece(unsigned int x, unsigned int y) const
 {
     return b[y][x];
-}
-
-void Board::setPiece(int newX, int newY, int origX, int origY)
-{
-    if (b[newY][newX] != nullptr)
-    {
-        b[newY][newX]->kill();
-    }
-
-    b[newY][newX] = b[origY][origX];
-    b[newY][newX]->moveTo(newX, newY);
 }
 
 void Board::makeMove(const Move &m)
@@ -68,10 +57,15 @@ void Board::makeMove(const Move &m)
     }
 
     //This cast gets rid of const
-    b[m.getNewY()][m.getNewX()] = const_cast<Piece *>(m.getPiece());
+    b[m.getNewY()][m.getNewX()] = const_cast<Piece *>(m.getNewPiece());
     b[m.getNewY()][m.getNewX()]->moveTo(m.getNewX(), m.getNewY());
 
     b[m.getOldY()][m.getOldX()] = nullptr;
+}
+
+void Board::unmakeMove(const Move &m)
+{
+    
 }
 
 void Board::setPieceNull(int x, int y)

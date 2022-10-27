@@ -28,11 +28,11 @@ void King::getPossibleMoves(std::vector<Move> &moves, const Board &b) const
             {
                 if (b.getPiece(x + xOffset, y + yOffset) == nullptr)
                 {
-                    moves.emplace_back(this, x, y, x + xOffset, y + yOffset);
+                    moves.emplace_back(this, b.getPiece(x + xOffset, y + yOffset), x, y, x + xOffset, y + yOffset);
                 }
                 else if (b.getPiece(x + xOffset, y + yOffset)->isWhite() != this->isWhite())
                 {
-                    moves.emplace_back(this, x, y, x + xOffset, y + yOffset);
+                    moves.emplace_back(this, b.getPiece(x + xOffset, y + yOffset), x, y, x + xOffset, y + yOffset);
                 }
             }
         }

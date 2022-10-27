@@ -33,7 +33,7 @@ void Pawn::getPossibleMoves(std::vector<Move> &moves, const Board &b) const
     {
         if (b.getPiece(x, y + yDir * 2) == nullptr && firstMove && b.getPiece(x, y + yDir) == nullptr)
         {
-            moves.emplace_back(this, x, y, x, y + yDir * 2);
+            moves.emplace_back(this, b.getPiece(x, y + yDir * 2), x, y, x, y + yDir * 2);
         }
     }
     // single pawn push
@@ -41,7 +41,7 @@ void Pawn::getPossibleMoves(std::vector<Move> &moves, const Board &b) const
     {
         if (b.getPiece(x, y + yDir) == nullptr)
         {
-            moves.emplace_back(this, x, y, x, y + yDir);
+            moves.emplace_back(this, b.getPiece(x, y + yDir), x, y, x, y + yDir);
         }
     }
     // pawn right capture
@@ -51,7 +51,7 @@ void Pawn::getPossibleMoves(std::vector<Move> &moves, const Board &b) const
         {
             if (b.getPiece(x + 1, y + yDir)->isWhite() != this->isWhite())
             {
-                moves.emplace_back(this, x, y, x + 1, y + yDir);
+                moves.emplace_back(this, b.getPiece(x + 1, y + yDir), x, y, x + 1, y + yDir);
             }
         }
     }
@@ -62,7 +62,7 @@ void Pawn::getPossibleMoves(std::vector<Move> &moves, const Board &b) const
         {
             if (b.getPiece(x - 1, y + yDir)->isWhite() != this->isWhite())
             {
-                moves.emplace_back(this, x, y, x - 1, y + yDir);
+                moves.emplace_back(this, b.getPiece(x - 1, y + yDir), x, y, x - 1, y + yDir);
             }
         }
     }

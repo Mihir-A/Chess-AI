@@ -12,6 +12,7 @@ private:
 
 public:
     Board();
+    ~Board();
     const Piece* getPiece(unsigned int x, unsigned int y) const;
     void setPieceNull(int x, int y);
     void makeMove(const Move &m);

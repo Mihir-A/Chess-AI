@@ -3,9 +3,6 @@
 
 class Pawn : public Piece
 {
-private:
-    bool firstMove;
-
 public:
     Pawn(bool white, int x, int y);
     void moveTo(int xCord, int yCord) override;

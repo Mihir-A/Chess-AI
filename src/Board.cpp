@@ -50,6 +50,16 @@ Board::Board()
     }
 }
 
+Board::~Board()
+{
+    for (const auto piece : whitePieces) {
+        delete piece;
+    }
+    for (const auto piece : blackPieces) {
+        delete piece;
+    }
+}
+
 const Piece* Board::getPiece(unsigned int x, unsigned int y) const
 {
     return b[y][x];
@@ -58,7 +68,7 @@ const Piece* Board::getPiece(unsigned int x, unsigned int y) const
 void Board::makeMove(const Move &m)
 {
     if (b[m.getNewY()][m.getNewX()] != nullptr) {
-        b[m.getNewY()][m.getNewX()]->kill();
+        b[m.getNewY()][m.getNewX()]->setKill(true);
     }
 
     //This cast gets rid of const
@@ -69,7 +79,19 @@ void Board::makeMove(const Move &m)
 }
 
 void Board::unmakeMove(const Move &m)
-{ }
+{
+    if (m.getOldPiece()) {
+        const_cast<Piece *>(m.getOldPiece())->setKill(false);
+        b[m.getNewY()][m.getNewX()] = const_cast<Piece *>(m.getOldPiece());
+        b[m.getNewY()][m.getNewX()]->moveTo(m.getNewX(), m.getNewY());
+    }
+    else {
+        b[m.getNewY()][m.getNewX()] = nullptr;
+    }
+
+    b[m.getOldY()][m.getOldX()] = const_cast<Piece *>(m.getNewPiece());
+    b[m.getOldY()][m.getOldX()]->moveTo(m.getOldX(), m.getOldY());
+}
 
 const std::vector<const Piece *>& Board::getWhitePieces() const
 {

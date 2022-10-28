@@ -24,6 +24,5 @@ private:
     bool whiteTurn;
     std::vector<Move> whiteMoves;
     std::vector<Move> blackMoves;
-
     std::vector<Move> playedMoves;
 };

@@ -2,12 +2,13 @@
 
 
 Piece::Piece(bool white, int x, int y, const std::string &name)
-    : tName(name)
+    : firstMove(true)
+      , white(white)
+      , x(x)
+      , y(y)
+      , dead(false)
+      , tName(name)
 {
-    this->x = x;
-    this->y = y;
-    this->white = white;
-    dead = false;
     this->texture.setSmooth(true);
 }
 
@@ -42,9 +43,9 @@ bool Piece::isDead() const
     return dead;
 }
 
-void Piece::kill()
+void Piece::setKill(bool killed)
 {
-    dead = true;
+    dead = killed;
 }
 
 bool Piece::onBoard(int p)

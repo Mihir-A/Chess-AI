@@ -3,16 +3,15 @@
 #include <iostream>
 
 Game::Game()
+    : windowSize(800)
+      , window(sf::VideoMode(windowSize, windowSize), "Chess", sf::Style::Titlebar + sf::Style::Close + sf::Style::Resize)
+      , brownSquare(sf::Vector2f(windowSize / 8.0f, windowSize / 8.0f))
+      , yellowSquare(sf::Vector2f(windowSize / 8.0f, windowSize / 8.0f))
+      , heldPiece(nullptr)
+      , recentPiece(nullptr)
 {
-    board = Board();
-    windowSize = 800;
-    window.create(sf::VideoMode(windowSize, windowSize), "Chess", sf::Style::Titlebar + sf::Style::Close + sf::Style::Resize);
-    brownSquare.setSize(sf::Vector2f(windowSize / 8.0f, windowSize / 8.0f));
     brownSquare.setFillColor(sf::Color(181, 136, 99));// Tan color of the board
-    yellowSquare.setSize(sf::Vector2f(windowSize / 8.0f, windowSize / 8.0f));
     yellowSquare.setFillColor(sf::Color(247, 236, 91));// yellow color of the selected piece
-    heldPiece = nullptr;
-    recentPiece = nullptr;
 
     playedMoves.reserve(10);
 
@@ -76,6 +75,12 @@ void Game::play()
                     }
                 }
                 heldPiece = nullptr;
+            }
+            else if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::D) {
+                board.unmakeMove(playedMoves[playedMoves.size() - 1]);
+                playedMoves.pop_back();
+                whiteTurn = !whiteTurn;
+                getMoves();
             }
 
             // Makes sure the window is always a square
@@ -156,6 +161,7 @@ void Game::getMoves()
     std::vector<Move> &playerMoves = whiteTurn ? whiteMoves : blackMoves;
     const std::vector<const Piece *> &playerPieces = whiteTurn ? board.getWhitePieces() : board.getBlackPieces();
 
+    //gets psudo legal moves
     playerMoves.clear();
     for (const auto piece : playerPieces) {
         if (!piece->isDead()) {

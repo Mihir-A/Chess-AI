@@ -161,7 +161,7 @@ void Game::getMoves()
     std::vector<Move> &playerMoves = whiteTurn ? whiteMoves : blackMoves;
     const std::vector<const Piece *> &playerPieces = whiteTurn ? board.getWhitePieces() : board.getBlackPieces();
 
-    //gets psudo legal moves
+    //gets pseudo legal moves
     playerMoves.clear();
     for (const auto piece : playerPieces) {
         if (!piece->isDead()) {

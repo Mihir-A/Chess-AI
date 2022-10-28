@@ -1,7 +1,7 @@
 #pragma once
 #include "Piece.h"
 
-class Bishop : public Piece
+class Bishop final : public Piece
 {
 public:
     Bishop(bool white, int x, int y);

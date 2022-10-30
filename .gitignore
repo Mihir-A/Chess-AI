@@ -29,8 +29,3 @@
 .vs/
 bin/
 lib/cmake
-
-# Executables
-*.exe
-*.out
-*.app

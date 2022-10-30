@@ -1,35 +1,49 @@
 #include "Move.h"
 
-Move::Move(const Piece* newPiece, const Piece* oldPiece, int oldX, int oldY, int newX, int newY)
-    : newPiece(newPiece), oldPiece(oldPiece), oldX(oldX), oldY(oldY), newX(newX), newY(newY)
-{}
-
-const Piece* Move::getNewPiece() const
+Move::Move(const Piece* movingPiece, const Piece* targetedPiece, int oldX, int oldY, int newX, int newY)
+    : movingPiece(movingPiece), targetedPiece(targetedPiece), oldX(oldX), oldY(oldY), newX(newX), newY(newY), firstMoveMoving(movingPiece->getHasMoved())
 {
-    return newPiece;
+    if (targetedPiece) {
+        firstMoveTargeted = targetedPiece->getHasMoved();
+    }
 }
 
-const Piece* Move::getOldPiece() const
+const Piece* Move::getMovingPiece() const
 {
-    return oldPiece;
+    return movingPiece;
 }
 
-int Move::getOldX() const
+const Piece* Move::getTargetedPiece() const
+{
+    return targetedPiece;
+}
+
+int Move::getTargetedX() const
 {
     return oldX;
 }
 
-int Move::getOldY() const
+bool Move::isMovingFirst() const
+{
+    return firstMoveMoving;
+}
+
+bool Move::isTargetedFirst() const
+{
+    return firstMoveTargeted;
+}
+
+int Move::getTargetedY() const
 {
     return oldY;
 }
 
-int Move::getNewY() const
+int Move::getMovingY() const
 {
     return newY;
 }
 
-int Move::getNewX() const
+int Move::getMovingX() const
 {
     return newX;
 }
@@ -37,5 +51,5 @@ int Move::getNewX() const
 
 bool Move::operator==(const Move &other) const
 {
-    return (other.newX == newX && other.newY == newY && other.oldX == oldX && other.oldY == oldY && other.newPiece == newPiece);
+    return (other.newX == newX && other.newY == newY && other.oldX == oldX && other.oldY == oldY && other.movingPiece == movingPiece);
 }

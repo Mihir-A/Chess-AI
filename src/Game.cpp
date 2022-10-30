@@ -1,6 +1,8 @@
 #include "Game.h"
 #include "Piece.h"
+#include "King.h"
 #include <iostream>
+
 
 Game::Game()
     : windowSize(800)
@@ -169,10 +171,35 @@ void Game::getMoves()
         }
     }
 
+    const King* king = nullptr;
+
+    for (const auto piece : playerPieces) {
+        if (piece->getPieceType() == "King") {
+            king = dynamic_cast<const King *>(piece);
+        }
+    }
+
+    //This lambda plays all possible moves and then checks if they cause the king to be in check
+    //These moves are removed from the list
+    const auto it = std::ranges::remove_if(playerMoves, [this, &king](const Move &m)
+    {
+        board.makeMove(m);
+        if (king->inCheck(board)) {
+            board.unmakeMove(m);
+            return true;
+        }
+        board.unmakeMove(m);
+        return false;
+    }).begin();
+
+    playerMoves.erase(it, playerMoves.end());
+
     std::cout << "Possible moves for " << (whiteTurn ? "White" : "Black") << ":\n";
 
+
     for (const Move &a : playerMoves) {
-        std::cout << a.getNewPiece()->getPieceType() << " from " << a.getOldX() << " " << 7 - a.getOldY() << " to " << a.getNewX() << " " << 7 - a.getNewY() << '\n';
+
+        std::cout << a.getMovingPiece()->getPieceType() << " from " << a.getTargetedX() << " " << 7 - a.getTargetedY() << " to " << a.getMovingX() << " " << 7 - a.getMovingY() << '\n';
     }
     std::cout << "\n\n\n";
 }

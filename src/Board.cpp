@@ -67,30 +67,32 @@ const Piece* Board::getPiece(unsigned int x, unsigned int y) const
 
 void Board::makeMove(const Move &m)
 {
-    if (b[m.getNewY()][m.getNewX()] != nullptr) {
-        b[m.getNewY()][m.getNewX()]->setKill(true);
+    if (b[m.getMovingY()][m.getMovingX()] != nullptr) {
+        b[m.getMovingY()][m.getMovingX()]->setKill(true);
     }
 
     //This cast gets rid of const
-    b[m.getNewY()][m.getNewX()] = const_cast<Piece *>(m.getNewPiece());
-    b[m.getNewY()][m.getNewX()]->moveTo(m.getNewX(), m.getNewY());
+    b[m.getMovingY()][m.getMovingX()] = const_cast<Piece *>(m.getMovingPiece());
+    b[m.getMovingY()][m.getMovingX()]->moveTo(m.getMovingX(), m.getMovingY());
 
-    b[m.getOldY()][m.getOldX()] = nullptr;
+    b[m.getTargetedY()][m.getTargetedX()] = nullptr;
 }
 
 void Board::unmakeMove(const Move &m)
 {
-    if (m.getOldPiece()) {
-        const_cast<Piece *>(m.getOldPiece())->setKill(false);
-        b[m.getNewY()][m.getNewX()] = const_cast<Piece *>(m.getOldPiece());
-        b[m.getNewY()][m.getNewX()]->moveTo(m.getNewX(), m.getNewY());
+    if (m.getTargetedPiece()) {
+        b[m.getMovingY()][m.getMovingX()] = const_cast<Piece *>(m.getTargetedPiece());
+        b[m.getMovingY()][m.getMovingX()]->setKill(false);
+        b[m.getMovingY()][m.getMovingX()]->moveTo(m.getMovingX(), m.getMovingY());
+        b[m.getMovingY()][m.getMovingX()]->setHasMoved(m.isTargetedFirst());
     }
     else {
-        b[m.getNewY()][m.getNewX()] = nullptr;
+        b[m.getMovingY()][m.getMovingX()] = nullptr;
     }
 
-    b[m.getOldY()][m.getOldX()] = const_cast<Piece *>(m.getNewPiece());
-    b[m.getOldY()][m.getOldX()]->moveTo(m.getOldX(), m.getOldY());
+    b[m.getTargetedY()][m.getTargetedX()] = const_cast<Piece *>(m.getMovingPiece());
+    b[m.getTargetedY()][m.getTargetedX()]->moveTo(m.getTargetedX(), m.getTargetedY());
+    b[m.getTargetedY()][m.getTargetedX()]->setHasMoved(m.isMovingFirst());
 }
 
 const std::vector<const Piece *>& Board::getWhitePieces() const

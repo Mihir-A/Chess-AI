@@ -2,7 +2,7 @@
 
 
 Piece::Piece(bool white, int x, int y, const std::string &name)
-    : firstMove(true)
+    : hasMoved(true)
       , white(white)
       , x(x)
       , y(y)
@@ -10,6 +10,16 @@ Piece::Piece(bool white, int x, int y, const std::string &name)
       , tName(name)
 {
     this->texture.setSmooth(true);
+}
+
+bool Piece::getHasMoved() const
+{
+    return hasMoved;
+}
+
+void Piece::setHasMoved(bool moved)
+{
+    hasMoved = moved;
 }
 
 bool Piece::isWhite() const
@@ -36,6 +46,7 @@ void Piece::moveTo(int xCord, int yCord)
 {
     this->x = xCord;
     this->y = yCord;
+    hasMoved = false;
 }
 
 bool Piece::isDead() const

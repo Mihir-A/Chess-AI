@@ -14,6 +14,7 @@ private:
     void draw();
     void getMoves();
     bool canMove(const Move &m) const;
+    bool findCheck(const Move &move);
     unsigned int windowSize;
     sf::RenderWindow window;
     Board board;

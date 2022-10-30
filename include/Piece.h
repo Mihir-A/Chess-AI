@@ -10,7 +10,7 @@ class Piece
 protected:
     Piece(bool white, int x, int y, const std::string &name);
     sf::Texture texture;
-    bool firstMove;
+    bool hasMoved;
     bool white;
     int x;
     int y;
@@ -22,7 +22,9 @@ public:
     virtual ~Piece() = default;
     int getX() const;
     int getY() const;
-    virtual void moveTo(int xCord, int yCord);
+    bool getHasMoved() const;
+    void setHasMoved(bool moved);
+    void moveTo(int xCord, int yCord);
     bool isDead() const;
     void setKill(bool killed);
     bool isWhite() const;

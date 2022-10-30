@@ -32,7 +32,7 @@ void King::getPossibleMoves(std::vector<Move> &moves, const Board &b) const
     }
 }
 
-bool King::inCheck(const Board &b)
+bool King::inCheck(const Board &b) const
 {
     //Will keep stepping in all directions until it finds a piece
     //Bishop/Queen
@@ -44,9 +44,11 @@ bool King::inCheck(const Board &b)
             break;
         }
 
-        if (b.getPiece(newX, newY) != nullptr && b.getPiece(newX, newY)->isWhite() != white) {
-            if (b.getPiece(newX, newY)->getPieceType() == "Bishop" || b.getPiece(newX, newY)->getPieceType() == "Queen") {
-                return true;
+        if (b.getPiece(newX, newY) != nullptr) {
+            if (b.getPiece(newX, newY)->isWhite() != white) {
+                if (b.getPiece(newX, newY)->getPieceType() == "Bishop" || b.getPiece(newX, newY)->getPieceType() == "Queen") {
+                    return true;
+                }
             }
             break;
         }
@@ -61,9 +63,11 @@ bool King::inCheck(const Board &b)
             break;
         }
 
-        if (b.getPiece(newX, newY) != nullptr && b.getPiece(newX, newY)->isWhite() != white) {
-            if (b.getPiece(newX, newY)->getPieceType() == "Bishop" || b.getPiece(newX, newY)->getPieceType() == "Queen") {
-                return true;
+        if (b.getPiece(newX, newY) != nullptr) {
+            if (b.getPiece(newX, newY)->isWhite() != white) {
+                if (b.getPiece(newX, newY)->getPieceType() == "Bishop" || b.getPiece(newX, newY)->getPieceType() == "Queen") {
+                    return true;
+                }
             }
             break;
         }
@@ -78,9 +82,11 @@ bool King::inCheck(const Board &b)
             break;
         }
 
-        if (b.getPiece(newX, newY) != nullptr && b.getPiece(newX, newY)->isWhite() != white) {
-            if (b.getPiece(newX, newY)->getPieceType() == "Bishop" || b.getPiece(newX, newY)->getPieceType() == "Queen") {
-                return true;
+        if (b.getPiece(newX, newY) != nullptr) {
+            if (b.getPiece(newX, newY)->isWhite() != white) {
+                if (b.getPiece(newX, newY)->getPieceType() == "Bishop" || b.getPiece(newX, newY)->getPieceType() == "Queen") {
+                    return true;
+                }
             }
             break;
         }
@@ -95,9 +101,11 @@ bool King::inCheck(const Board &b)
             break;
         }
 
-        if (b.getPiece(newX, newY) != nullptr && b.getPiece(newX, newY)->isWhite() != white) {
-            if (b.getPiece(newX, newY)->getPieceType() == "Bishop" || b.getPiece(newX, newY)->getPieceType() == "Queen") {
-                return true;
+        if (b.getPiece(newX, newY) != nullptr) {
+            if (b.getPiece(newX, newY)->isWhite() != white) {
+                if (b.getPiece(newX, newY)->getPieceType() == "Bishop" || b.getPiece(newX, newY)->getPieceType() == "Queen") {
+                    return true;
+                }
             }
             break;
         }
@@ -113,9 +121,11 @@ bool King::inCheck(const Board &b)
             break;
         }
 
-        if (b.getPiece(newX, newY) != nullptr && b.getPiece(newX, newY)->isWhite() != white) {
-            if (b.getPiece(newX, newY)->getPieceType() == "Rook" || b.getPiece(newX, newY)->getPieceType() == "Queen") {
-                return true;
+        if (b.getPiece(newX, newY) != nullptr) {
+            if (b.getPiece(newX, newY)->isWhite() != white) {
+                if (b.getPiece(newX, newY)->getPieceType() == "Rook" || b.getPiece(newX, newY)->getPieceType() == "Queen") {
+                    return true;
+                }
             }
             break;
         }
@@ -130,9 +140,11 @@ bool King::inCheck(const Board &b)
             break;
         }
 
-        if (b.getPiece(newX, newY) != nullptr && b.getPiece(newX, newY)->isWhite() != white) {
-            if (b.getPiece(newX, newY)->getPieceType() == "Rook" || b.getPiece(newX, newY)->getPieceType() == "Queen") {
-                return true;
+        if (b.getPiece(newX, newY) != nullptr) {
+            if (b.getPiece(newX, newY)->isWhite() != white) {
+                if (b.getPiece(newX, newY)->getPieceType() == "Rook" || b.getPiece(newX, newY)->getPieceType() == "Queen") {
+                    return true;
+                }
             }
             break;
         }
@@ -147,9 +159,11 @@ bool King::inCheck(const Board &b)
             break;
         }
 
-        if (b.getPiece(newX, newY) != nullptr && b.getPiece(newX, newY)->isWhite() != white) {
-            if (b.getPiece(newX, newY)->getPieceType() == "Rook" || b.getPiece(newX, newY)->getPieceType() == "Queen") {
-                return true;
+        if (b.getPiece(newX, newY) != nullptr) {
+            if (b.getPiece(newX, newY)->isWhite() != white) {
+                if (b.getPiece(newX, newY)->getPieceType() == "Rook" || b.getPiece(newX, newY)->getPieceType() == "Queen") {
+                    return true;
+                }
             }
             break;
         }
@@ -163,9 +177,11 @@ bool King::inCheck(const Board &b)
             break;
         }
 
-        if (b.getPiece(newX, newY) != nullptr && b.getPiece(newX, newY)->isWhite() != white) {
-            if (b.getPiece(newX, newY)->getPieceType() == "Rook" || b.getPiece(newX, newY)->getPieceType() == "Queen") {
-                return true;
+        if (b.getPiece(newX, newY) != nullptr) {
+            if (b.getPiece(newX, newY)->isWhite() != white) {
+                if (b.getPiece(newX, newY)->getPieceType() == "Rook" || b.getPiece(newX, newY)->getPieceType() == "Queen") {
+                    return true;
+                }
             }
             break;
         }

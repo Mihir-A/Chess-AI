@@ -187,6 +187,23 @@ bool King::inCheck(const Board &b) const
         }
     }
 
+    // Tall knight moves
+    for (const int dx : {-2, 2}) {
+        for (const int dy : {-1, 1}) {
+            if (onBoard(x + dx) && onBoard(y + dy) && b.getPiece(x + dx, y + dy) && b.getPiece(x + dx, y + dy)->isWhite() != white && b.getPiece(x + dx, y + dy)->getPieceType() == "Knight") {
+                return true;
+            }
+        }
+    }
+
+    // Wide knight moves
+    for (const int dx : {-1, 1}) {
+        for (const int dy : {-2, 2}) {
+            if (onBoard(x + dx) && onBoard(y + dy) && b.getPiece(x + dx, y + dy) && b.getPiece(x + dx, y + dy)->isWhite() != white && b.getPiece(x + dx, y + dy)->getPieceType() == "Knight") {
+                return true;
+            }
+        }
+    }
 
     return false;
 }

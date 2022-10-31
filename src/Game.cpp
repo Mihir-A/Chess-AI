@@ -46,6 +46,7 @@ void Game::play()
 
                     if (canMove(attemptedMove) && recentPiece->isWhite() == whiteTurn) {
                         board.makeMove(attemptedMove);
+                        playedMoves.push_back(attemptedMove);
                         whiteTurn = !whiteTurn;
                         getMoves();
                         recentPiece = nullptr;
@@ -112,7 +113,6 @@ void Game::draw()
             window.draw(brownSquare);
             brownSquare.move(gSize * 2, 0.0f);
         }
-
         if (i % 2 == 0) {
             brownSquare.setPosition(0.0f, gSize * (i + 1));
         }

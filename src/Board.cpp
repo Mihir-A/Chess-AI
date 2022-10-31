@@ -7,47 +7,14 @@
 #include "Pawn.h"
 #include "Move.h"
 
-Board::Board()
+Board::Board() : Board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
+{}
+
+Board::Board(const std::string& fenStr)
 {
-    for (int i = 2; i < 6; i++) {
-        for (int j = 0; j < 8; j++) {
-            this->b[i][j] = nullptr;
-        }
-    }
-    b[0][4] = new King(false, 4, 0);
-    b[7][4] = new King(true, 4, 7);
-
-    b[0][3] = new Queen(false, 3, 0);
-    b[7][3] = new Queen(true, 3, 7);
-
-    b[0][1] = new Knight(false, 1, 0);
-    b[0][6] = new Knight(false, 6, 0);
-    b[7][1] = new Knight(true, 1, 7);
-    b[7][6] = new Knight(true, 6, 7);
-
-    b[0][2] = new Bishop(false, 2, 0);
-    b[0][5] = new Bishop(false, 5, 0);
-    b[7][2] = new Bishop(true, 2, 7);
-    b[7][5] = new Bishop(true, 5, 7);
-
-    b[0][0] = new Rook(false, 0, 0);
-    b[0][7] = new Rook(false, 7, 0);
-    b[7][0] = new Rook(true, 0, 7);
-    b[7][7] = new Rook(true, 7, 7);
-
-    for (int i = 0; i < 8; i++) {
-        b[1][i] = new Pawn(false, i, 1);
-        b[6][i] = new Pawn(true, i, 6);
-    }
-
     whitePieces.reserve(16);
     blackPieces.reserve(16);
-    for (int i = 0; i < 2; i++) {
-        for (int j = 0; j < 8; j++) {
-            whitePieces.push_back(getPiece(j, i + 6));
-            blackPieces.push_back(getPiece(j, i));
-        }
-    }
+    decipherFen(fenStr);
 }
 
 Board::~Board()
@@ -105,7 +72,81 @@ const std::vector<const Piece *>& Board::getBlackPieces() const
     return blackPieces;
 }
 
-void Board::setPieceNull(int x, int y)
+void Board::decipherFenBoard(std::string::const_iterator& it)
 {
-    b[y][x] = nullptr;
+    int px = 0, py = 0;
+    for (; true ; ++it) {
+        const int num = *it - '0';
+
+        if (num >= 1 && num <=8) {
+            px += num - 1;
+        }
+        else if (*it == '/') {
+            py++;
+            px = 0;
+        }else {
+            switch (*it) {
+            default:
+                break;
+            case 'p':
+                b[py][px] = new Pawn(false, px, py);
+                break;
+            case 'P':
+                b[py][px] = new Pawn(true, px, py);
+                break;
+            case 'r':
+                b[py][px] = new Rook(false, px, py);
+                break;
+            case 'R':
+                b[py][px] = new Rook(true, px, py);
+                break;
+            case 'q':
+                b[py][px] = new Queen(false, px, py);
+                break;
+            case 'Q':
+                b[py][px] = new Queen(true, px, py);
+                break;
+            case 'k':
+                b[py][px] = new King(false, px, py);
+                break;
+            case 'K':
+                b[py][px] = new King(true, px, py);
+                break;
+            case 'n':
+                b[py][px] = new Knight(false, px, py);
+                break;
+            case 'N':
+                b[py][px] = new Knight(true, px, py);
+                break;
+            case 'b':
+                b[py][px] = new Bishop(false, px, py);
+                break;
+            case 'B':
+                b[py][px] = new Bishop(true, px, py);
+                break;
+            }
+            if(isupper(*it)) {
+                whitePieces.push_back(getPiece(px, py));
+            }else {
+                blackPieces.push_back(getPiece(px, py));
+            }
+            px++;
+        }
+
+        if (px == 8 && py == 7) {
+            break;
+        }
+    }
 }
+
+void Board::decipherFen(const std::string &fen)
+{
+    for (auto& row : b) {
+        std::ranges::fill(row, nullptr);
+    }
+
+    auto it = fen.begin();
+
+    decipherFenBoard(it);
+}
+

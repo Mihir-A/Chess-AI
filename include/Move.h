@@ -3,12 +3,11 @@
 
 class Move
 {
-private:
-    const Piece *movingPiece, *targetedPiece;
-    int oldX, oldY, newX, newY;
-    bool firstMoveMoving, firstMoveTargeted;
+
 public:
+    enum class MoveType { Normal, Castle, EnPassant, Promotion };
     Move(const Piece* movingPiece, const Piece* targetedPiece, int oldX, int oldY, int newX, int newY);
+    Move(const Piece* movingPiece, const Piece* targetedPiece, int oldX, int oldY, int newX, int newY, MoveType moveType);
     const Piece* getMovingPiece() const;
     const Piece* getTargetedPiece() const;
     bool isMovingFirst() const;
@@ -18,4 +17,10 @@ public:
     int getMovingX() const;
     int getMovingY() const;
     bool operator==(const Move &other) const;
+    MoveType getMoveType() const;
+private:
+    const Piece* movingPiece, * targetedPiece;
+    int oldX, oldY, newX, newY;
+    bool firstMoveMoving, firstMoveTargeted;
+    MoveType moveType;
 };

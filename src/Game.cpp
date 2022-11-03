@@ -6,23 +6,31 @@
 
 Game::Game()
     : windowSize(800)
-      , window(sf::VideoMode(windowSize, windowSize), "Chess", sf::Style::Titlebar + sf::Style::Close + sf::Style::Resize)
-      , brownSquare(sf::Vector2f(windowSize / 8.0f, windowSize / 8.0f))
-      , yellowSquare(sf::Vector2f(windowSize / 8.0f, windowSize / 8.0f))
-      , heldPiece(nullptr)
-      , recentPiece(nullptr)
+    , window(sf::VideoMode(windowSize, windowSize), "Chess", sf::Style::Titlebar + sf::Style::Close + sf::Style::Resize)
+    , brownSquare(sf::Vector2f(windowSize / 8.0f, windowSize / 8.0f))
+    , yellowSquare(sf::Vector2f(windowSize / 8.0f, windowSize / 8.0f))
+    , redSquare(sf::Vector2f(windowSize / 8.0f, windowSize / 8.0f))
+    , heldPiece(nullptr)
+    , recentPiece(nullptr)
 {
     brownSquare.setFillColor(sf::Color(181, 136, 99));// Tan color of the board
-    yellowSquare.setFillColor(sf::Color(247, 236, 91));// yellow color of the selected piece
+    yellowSquare.setFillColor(sf::Color(255, 255, 0, 130));// yellow color of the selected piece
+    redSquare.setFillColor(sf::Color(235, 97, 80, 204));
 
     playedMoves.reserve(10);
 
     whiteTurn = true;
     getMoves();
+    window.setVerticalSyncEnabled(true);
 }
 
 void Game::play()
 {
+    float fps;
+    sf::Clock clock = sf::Clock::Clock();
+    sf::Time previousTime = clock.getElapsedTime();
+    sf::Time currentTime;
+
     while (window.isOpen()) {
         sf::Event event;
         while (window.pollEvent(event)) {
@@ -85,18 +93,23 @@ void Game::play()
                 whiteTurn = !whiteTurn;
                 getMoves();
             }
-
-            // Makes sure the window is always a square
-            if (window.getSize().x != windowSize) {
-                windowSize = window.getSize().x;
-                window.setSize(sf::Vector2u(windowSize, windowSize));
+            else if (event.type == sf::Event::Resized) {
+                // Makes sure the window is always a square
+                if (window.getSize().x != windowSize) {
+                    windowSize = window.getSize().x;
+                    window.setSize(sf::Vector2u(windowSize, windowSize));
+                }
+                else if (window.getSize().y != windowSize) {
+                    windowSize = window.getSize().y;
+                    window.setSize(sf::Vector2u(windowSize, windowSize));
+                }
             }
-            else if (window.getSize().y != windowSize) {
-                windowSize = window.getSize().y;
-                window.setSize(sf::Vector2u(windowSize, windowSize));
-            }
-            draw();
         }
+        draw();
+        currentTime = clock.getElapsedTime();
+        fps = 1.0f / (currentTime.asSeconds() - previousTime.asSeconds()); // the asSeconds returns a float
+        //std::cout << "fps =" << floor(fps) << std::endl; // flooring it will make the frame rate a rounded number
+        previousTime = currentTime;
     }
 }
 
@@ -104,7 +117,7 @@ void Game::draw()
 {
     window.clear(sf::Color(240, 217, 181));
 
-    const float gSize = brownSquare.getSize().x;
+    constexpr float gSize = 100.0f;
     brownSquare.setPosition(gSize, 0.0f);
 
     //Draws the grid tiles
@@ -121,8 +134,20 @@ void Game::draw()
         }
     }
 
-    sf::Sprite heldSprite;
+    //highlights old move
+    if (!playedMoves.empty()) {
+        drawYellowSquare(gSize * playedMoves[playedMoves.size() - 1].getMovingX(), gSize * playedMoves[playedMoves.size() - 1].getMovingY());
+        drawYellowSquare(gSize * playedMoves[playedMoves.size() - 1].getTargetedX(), gSize * playedMoves[playedMoves.size() - 1].getTargetedY());
+    }
 
+    //Highlights king in red if in check
+    for (const auto piece : whiteTurn ? board.getWhitePieces() : board.getBlackPieces()) {
+        if (piece->getPieceType() == "King" && dynamic_cast<const King *>(piece)->inCheck(board)) {
+            drawRedSquare(piece->getX() * gSize, piece->getY() * gSize);
+        }
+    }
+
+    sf::Sprite heldSprite;
     // Draws the pieces
     for (int i = 0; i < 8; i++) {
         for (int j = 0; j < 8; j++) {
@@ -132,12 +157,10 @@ void Game::draw()
                     constexpr int offset = 50;
                     heldSprite.setTexture(heldPiece->getTexture());
                     heldSprite.setPosition(sf::Mouse::getPosition(window).x * 800.0f / windowSize - offset, sf::Mouse::getPosition(window).y * 800.0f / windowSize - offset);
-                    yellowSquare.setPosition(gSize * j, gSize * i);
-                    window.draw(yellowSquare);
+                    drawYellowSquare(gSize * j, gSize * i);
                 }
                 else if (heldPiece == nullptr && board.getPiece(j, i) == recentPiece && recentPiece != nullptr) {
-                    yellowSquare.setPosition(gSize * j, gSize * i);
-                    window.draw(yellowSquare);
+                    drawYellowSquare(gSize * j, gSize * i);
                     sf::Sprite s;
                     s.setTexture(board.getPiece(j, i)->getTexture());
                     s.setPosition(gSize * j, gSize * i);
@@ -156,6 +179,18 @@ void Game::draw()
     // The held piece should be drawn over others
     window.draw(heldSprite);
     window.display();
+}
+
+void Game::drawYellowSquare(float x, float y)
+{
+    yellowSquare.setPosition(x, y);
+    window.draw(yellowSquare);
+}
+
+void Game::drawRedSquare(float x, float y)
+{
+    redSquare.setPosition(x, y);
+    window.draw(redSquare);
 }
 
 void Game::getMoves()

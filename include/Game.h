@@ -12,14 +12,16 @@ public:
 
 private:
     void draw();
+    void drawYellowSquare(float x, float y);
+    void drawRedSquare(float x, float y);
     void getMoves();
     bool canMove(const Move &m) const;
-    bool findCheck(const Move &move);
     unsigned int windowSize;
     sf::RenderWindow window;
     Board board;
     sf::RectangleShape brownSquare;
     sf::RectangleShape yellowSquare;
+    sf::RectangleShape redSquare;
     const Piece* heldPiece;
     const Piece* recentPiece;
     bool whiteTurn;

@@ -1,7 +1,11 @@
 #include "Move.h"
 
 Move::Move(const Piece* movingPiece, const Piece* targetedPiece, int oldX, int oldY, int newX, int newY)
-    : movingPiece(movingPiece), targetedPiece(targetedPiece), oldX(oldX), oldY(oldY), newX(newX), newY(newY), firstMoveMoving(movingPiece->getHasMoved())
+    : Move(movingPiece, targetedPiece, oldX, oldY, newX, newY, MoveType::Normal)
+{}
+
+Move::Move(const Piece* movingPiece, const Piece* targetedPiece, int oldX, int oldY, int newX, int newY, MoveType moveType)
+    : movingPiece(movingPiece), targetedPiece(targetedPiece), oldX(oldX), oldY(oldY), newX(newX), newY(newY), firstMoveMoving(movingPiece->getHasMoved()), moveType(moveType)
 {
     if (targetedPiece) {
         firstMoveTargeted = targetedPiece->getHasMoved();
@@ -52,4 +56,9 @@ int Move::getMovingX() const
 bool Move::operator==(const Move &other) const
 {
     return (other.newX == newX && other.newY == newY && other.oldX == oldX && other.oldY == oldY && other.movingPiece == movingPiece);
+}
+
+Move::MoveType Move::getMoveType() const
+{
+    return moveType;
 }

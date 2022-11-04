@@ -30,6 +30,26 @@ void King::getPossibleMoves(std::vector<Move> &moves, const Board &b) const
             }
         }
     }
+
+    const Piece* rook = b.getPiece(y, x + 3);
+    //castle 
+    if(!hasMoved && rook && rook->getPieceType() == "Rook" && !rook->getHasMoved()) {
+        if(!b.getPiece(x + 1, y) && !b.getPiece(x + 2, y)) {
+            bool castleCheck = false;
+            for (auto dx : {1, 2}) {
+                Move m = Move(this, b.getPiece(x + dx, y), x, y, x + dx, y);
+                const_cast<Board&>(b).makeMove(m);
+                if (inCheck(b)) {
+                    castleCheck = true;
+                }
+                const_cast<Board&>(b).unmakeMove(m);
+            }
+            if(!castleCheck) {
+                moves.emplace_back(this, b.getPiece(x + 3, y), x, y, x + 2, y, Move::MoveType::Castle);
+            }
+        }
+    }
+
 }
 
 bool King::inCheck(const Board &b) const

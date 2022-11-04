@@ -15,7 +15,7 @@ private:
     void drawYellowSquare(float x, float y);
     void drawRedSquare(float x, float y);
     void getMoves();
-    bool canMove(const Move &m) const;
+    bool canMove(Move &m) const;
     unsigned int windowSize;
     sf::RenderWindow window;
     Board board;

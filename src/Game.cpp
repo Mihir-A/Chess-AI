@@ -75,7 +75,7 @@ void Game::play()
                         recentPiece = heldPiece;
                     }
 
-                    const auto attemptedMove = Move(heldPiece, board.getPiece(xCord, yCord), heldPiece->getX(), heldPiece->getY(), xCord, yCord);
+                    auto attemptedMove = Move(heldPiece, board.getPiece(xCord, yCord), heldPiece->getX(), heldPiece->getY(), xCord, yCord);
 
                     if (canMove(attemptedMove)) {
                         board.makeMove(attemptedMove);
@@ -136,8 +136,8 @@ void Game::draw()
 
     //highlights old move
     if (!playedMoves.empty()) {
-        drawYellowSquare(gSize * playedMoves[playedMoves.size() - 1].getMovingX(), gSize * playedMoves[playedMoves.size() - 1].getMovingY());
-        drawYellowSquare(gSize * playedMoves[playedMoves.size() - 1].getTargetedX(), gSize * playedMoves[playedMoves.size() - 1].getTargetedY());
+        drawYellowSquare(gSize * playedMoves[playedMoves.size() - 1].getNewX(), gSize * playedMoves[playedMoves.size() - 1].getNewY());
+        drawYellowSquare(gSize * playedMoves[playedMoves.size() - 1].getOldX(), gSize * playedMoves[playedMoves.size() - 1].getOldY());
     }
 
     //Highlights king in red if in check
@@ -218,12 +218,12 @@ void Game::getMoves()
     //These moves are removed from the list
     const auto it = std::ranges::remove_if(playerMoves, [this, &king](const Move &m)
     {
-        board.makeMove(m);
+        //board.makeMove(m);
         if (king->inCheck(board)) {
             board.unmakeMove(m);
             return true;
         }
-        board.unmakeMove(m);
+       // board.unmakeMove(m);
         return false;
     }).begin();
 
@@ -234,17 +234,21 @@ void Game::getMoves()
 
     for (const Move &a : playerMoves) {
 
-        std::cout << a.getMovingPiece()->getPieceType() << " from " << a.getTargetedX() << " " << 7 - a.getTargetedY() << " to " << a.getMovingX() << " " << 7 - a.getMovingY() << '\n';
+        std::cout << a.getMovingPiece()->getPieceType() << " from " << a.getOldX() << " " << 7 - a.getOldY() << " to " << a.getNewX() << " " << 7 - a.getNewY() << '\n';
     }
     std::cout << "\n\n\n";
 }
 
-bool Game::canMove(const Move &m) const
+bool Game::canMove(Move &m) const
 {
     const std::vector<Move> &possibleMoves = whiteTurn ? whiteMoves : blackMoves;
 
     for (const Move &move : possibleMoves) {
         if (m == move) {
+            //This will add the necessary settings to the move
+            if(move.getMoveType() == Move::MoveType::Castle) {
+                m = move;
+            }
             return true;
         }
     }

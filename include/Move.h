@@ -12,12 +12,13 @@ public:
     const Piece* getTargetedPiece() const;
     bool isMovingFirst() const;
     bool isTargetedFirst() const;
-    int getTargetedX() const;
-    int getTargetedY() const;
-    int getMovingX() const;
-    int getMovingY() const;
+    int getOldX() const;
+    int getOldY() const;
+    int getNewX() const;
+    int getNewY() const;
     bool operator==(const Move &other) const;
     MoveType getMoveType() const;
+    void setMoveType(MoveType moveType);
 private:
     const Piece* movingPiece, * targetedPiece;
     int oldX, oldY, newX, newY;

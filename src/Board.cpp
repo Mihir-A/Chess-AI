@@ -6,8 +6,8 @@
 #include "Rook.h"
 #include "Pawn.h"
 #include "Move.h"
-
-Board::Board() : Board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
+//"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+Board::Board() : Board("k7/8/8/8/8/8/8/4K1NR w KQkq - 0 1")
 {}
 
 Board::Board(const std::string& fenStr)
@@ -34,32 +34,66 @@ const Piece* Board::getPiece(unsigned int x, unsigned int y) const
 
 void Board::makeMove(const Move &m)
 {
-    if (b[m.getMovingY()][m.getMovingX()] != nullptr) {
-        b[m.getMovingY()][m.getMovingX()]->setKill(true);
+    if (m.getMoveType() == Move::MoveType::Normal) {
+        if (b[m.getNewY()][m.getNewX()] != nullptr) {
+            b[m.getNewY()][m.getNewX()]->setKill(true);
+        }
+
+        //This cast gets rid of const
+        b[m.getNewY()][m.getNewX()] = const_cast<Piece*>(m.getMovingPiece());
+        b[m.getNewY()][m.getNewX()]->moveTo(m.getNewX(), m.getNewY());
+
+        b[m.getOldY()][m.getOldX()] = nullptr;
     }
+    else if (m.getMoveType() == Move::MoveType::Castle) {
 
-    //This cast gets rid of const
-    b[m.getMovingY()][m.getMovingX()] = const_cast<Piece *>(m.getMovingPiece());
-    b[m.getMovingY()][m.getMovingX()]->moveTo(m.getMovingX(), m.getMovingY());
-
-    b[m.getTargetedY()][m.getTargetedX()] = nullptr;
+        if (m.getNewX() > m.getOldX()) {
+            // Moves King
+            b[m.getNewY()][m.getNewX()] = const_cast<Piece*>(m.getMovingPiece());
+            b[m.getNewY()][m.getNewX()]->moveTo(m.getNewX(), m.getNewY());
+            b[m.getOldY()][m.getOldX()] = nullptr;
+            //Moves Rook
+            b[m.getNewY()][m.getNewX() - 1] = const_cast<Piece*>(m.getTargetedPiece());
+            b[m.getNewY()][m.getNewX() - 1]->moveTo(m.getNewX() - 1, m.getNewY());
+            b[m.getNewY()][m.getNewX() + 1] = nullptr;
+        }
+    }
+    
 }
 
 void Board::unmakeMove(const Move &m)
 {
-    if (m.getTargetedPiece()) {
-        b[m.getMovingY()][m.getMovingX()] = const_cast<Piece *>(m.getTargetedPiece());
-        b[m.getMovingY()][m.getMovingX()]->setKill(false);
-        b[m.getMovingY()][m.getMovingX()]->moveTo(m.getMovingX(), m.getMovingY());
-        b[m.getMovingY()][m.getMovingX()]->setHasMoved(m.isTargetedFirst());
-    }
-    else {
-        b[m.getMovingY()][m.getMovingX()] = nullptr;
-    }
+    if (m.getMoveType() == Move::MoveType::Normal) {
+        if (m.getTargetedPiece()) {
+            b[m.getNewY()][m.getNewX()] = const_cast<Piece*>(m.getTargetedPiece());
+            b[m.getNewY()][m.getNewX()]->setKill(false);
+            b[m.getNewY()][m.getNewX()]->moveTo(m.getNewX(), m.getNewY());
+            b[m.getNewY()][m.getNewX()]->setHasMoved(m.isTargetedFirst());
+        }
+        else {
+            b[m.getNewY()][m.getNewX()] = nullptr;
+        }
 
-    b[m.getTargetedY()][m.getTargetedX()] = const_cast<Piece *>(m.getMovingPiece());
-    b[m.getTargetedY()][m.getTargetedX()]->moveTo(m.getTargetedX(), m.getTargetedY());
-    b[m.getTargetedY()][m.getTargetedX()]->setHasMoved(m.isMovingFirst());
+        b[m.getOldY()][m.getOldX()] = const_cast<Piece*>(m.getMovingPiece());
+        b[m.getOldY()][m.getOldX()]->moveTo(m.getOldX(), m.getOldY());
+        b[m.getOldY()][m.getOldX()]->setHasMoved(m.isMovingFirst());
+
+    }else if (m.getMoveType() == Move::MoveType::Castle) {
+        if (m.getNewX() > m.getOldX()) {
+            // Moves King
+            //TODO: fix read access violation
+            b[m.getOldY()][m.getOldX()] = const_cast<Piece*>(m.getMovingPiece());
+            b[m.getOldY()][m.getOldX()]->moveTo(m.getOldX(), m.getOldY());
+            b[m.getNewY()][m.getNewY()] = nullptr;
+            //Moves Rook
+            b[m.getOldY()][m.getOldX() - 1] = const_cast<Piece*>(m.getTargetedPiece());
+            b[m.getOldY()][m.getOldX() - 1]->moveTo(m.getOldX() - 1, m.getOldY());
+            b[m.getNewY()][m.getNewX() + 1] = nullptr;
+            b[m.getOldY()][m.getOldX() - 1]->setHasMoved(m.isTargetedFirst());
+        }
+        b[m.getNewY()][m.getNewY()]->setHasMoved(m.getMovingPiece());
+    }
+    
 }
 
 const std::vector<const Piece *>& Board::getWhitePieces() const
@@ -79,7 +113,7 @@ void Board::decipherFenBoard(std::string::const_iterator& it)
         const int num = *it - '0';
 
         if (num >= 1 && num <=8) {
-            px += num - 1;
+            px += num;
         }
         else if (*it == '/') {
             py++;
@@ -148,5 +182,6 @@ void Board::decipherFen(const std::string &fen)
     auto it = fen.begin();
 
     decipherFenBoard(it);
+    return;
 }
 

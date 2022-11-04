@@ -9,6 +9,8 @@ Move::Move(const Piece* movingPiece, const Piece* targetedPiece, int oldX, int o
 {
     if (targetedPiece) {
         firstMoveTargeted = targetedPiece->getHasMoved();
+    }else {
+        firstMoveTargeted = false;
     }
 }
 
@@ -22,7 +24,7 @@ const Piece* Move::getTargetedPiece() const
     return targetedPiece;
 }
 
-int Move::getTargetedX() const
+int Move::getOldX() const
 {
     return oldX;
 }
@@ -37,17 +39,17 @@ bool Move::isTargetedFirst() const
     return firstMoveTargeted;
 }
 
-int Move::getTargetedY() const
+int Move::getOldY() const
 {
     return oldY;
 }
 
-int Move::getMovingY() const
+int Move::getNewY() const
 {
     return newY;
 }
 
-int Move::getMovingX() const
+int Move::getNewX() const
 {
     return newX;
 }
@@ -55,10 +57,21 @@ int Move::getMovingX() const
 
 bool Move::operator==(const Move &other) const
 {
-    return (other.newX == newX && other.newY == newY && other.oldX == oldX && other.oldY == oldY && other.movingPiece == movingPiece);
+ //   if(other.getMoveType() == MoveType::Castle || getMoveType() == MoveType::Castle) {
+   //     //Since checks' second piece is the rook not the king move attempt. The check needs to be different
+    //    auto& castleMove = getMoveType() != MoveType::Castle ? other : *this;
+     //   auto& otherMove = getMoveType() == MoveType::Castle ? other : *this;
+   // }else {
+        return (other.newX == newX && other.newY == newY && other.oldX == oldX && other.oldY == oldY && other.movingPiece == movingPiece);
+  //  }
 }
 
 Move::MoveType Move::getMoveType() const
 {
     return moveType;
+}
+
+void Move::setMoveType(const MoveType moveType)
+{
+    this->moveType = moveType;
 }

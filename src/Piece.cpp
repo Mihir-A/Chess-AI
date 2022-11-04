@@ -2,7 +2,7 @@
 
 
 Piece::Piece(bool white, int x, int y, const std::string &name)
-    : hasMoved(true)
+    : hasMoved(false)
       , white(white)
       , x(x)
       , y(y)
@@ -46,7 +46,7 @@ void Piece::moveTo(int xCord, int yCord)
 {
     this->x = xCord;
     this->y = yCord;
-    hasMoved = false;
+    hasMoved = true;
 }
 
 bool Piece::isDead() const

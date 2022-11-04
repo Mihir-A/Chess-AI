@@ -13,7 +13,6 @@ Pawn::Pawn(bool white, int x, int y)
     else {
         texture.loadFromFile("assets/piece/bp.png");
     }
-    hasMoved = true;
 }
 
 void Pawn::getPossibleMoves(std::vector<Move> &moves, const Board &b) const
@@ -22,7 +21,7 @@ void Pawn::getPossibleMoves(std::vector<Move> &moves, const Board &b) const
 
     // double pawn push
     if (onBoard(y + yDir * 2)) {
-        if (b.getPiece(x, y + yDir * 2) == nullptr && hasMoved && b.getPiece(x, y + yDir) == nullptr) {
+        if (b.getPiece(x, y + yDir * 2) == nullptr && !hasMoved && b.getPiece(x, y + yDir) == nullptr) {
             moves.emplace_back(this, b.getPiece(x, y + yDir * 2), x, y, x, y + yDir * 2);
         }
     }

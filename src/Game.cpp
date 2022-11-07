@@ -109,7 +109,7 @@ void Game::play()
         draw();
 
         sf::Time currentTime = clock.getElapsedTime();
-        std::cout << "fps =" << floor(1.0f / (currentTime.asSeconds() - previousTime.asSeconds())) << std::endl; // flooring it will make the frame rate a rounded number
+        //std::cout << "fps =" << floor(1.0f / (currentTime.asSeconds() - previousTime.asSeconds())) << std::endl; // flooring it will make the frame rate a rounded number
         previousTime = currentTime;
     }
 }

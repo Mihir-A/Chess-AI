@@ -20,7 +20,7 @@ void King::getPossibleMoves(std::vector<Move> &moves, const Board &b) const
 
     for (const int xOffset : offsets) {
         for (const int yOffset : offsets) {
-            if (x + xOffset < 8 && x + xOffset > -1 && y + yOffset < 8 && y + yOffset > -1) {
+            if (onBoard(x + xOffset) && onBoard(y + yOffset)) {
                 if (b.getPiece(x + xOffset, y + yOffset) == nullptr) {
                     moves.emplace_back(this, b.getPiece(x + xOffset, y + yOffset), x, y, x + xOffset, y + yOffset);
                 }
@@ -30,26 +30,67 @@ void King::getPossibleMoves(std::vector<Move> &moves, const Board &b) const
             }
         }
     }
-
-    const Piece* rook = b.getPiece(y, x + 3);
-    //castle 
-    if(!hasMoved && rook && rook->getPieceType() == "Rook" && !rook->getHasMoved()) {
-        if(!b.getPiece(x + 1, y) && !b.getPiece(x + 2, y)) {
-            bool castleCheck = false;
-            for (auto dx : {1, 2}) {
-                Move m = Move(this, b.getPiece(x + dx, y), x, y, x + dx, y);
-                const_cast<Board&>(b).makeMove(m);
-                if (inCheck(b)) {
-                    castleCheck = true;
+    //Right Side castle
+    if (onBoard(x + 3)) {
+        const Piece* rook = b.getPiece(y, x + 3);
+        if (!hasMoved && rook && rook->getPieceType() == "Rook" && !rook->getHasMoved()) {
+            if (!b.getPiece(x + 1, y) && !b.getPiece(x + 2, y) && !inCheck(b)) {
+                bool castleCheck = false;
+                for (const auto dx : {1, 2}) {
+                    auto m = Move(this, b.getPiece(x + dx, y), x, y, x + dx, y);
+                    const_cast<Board &>(b).makeMove(m);
+                    if (inCheck(b)) {
+                        castleCheck = true;
+                    }
+                    const_cast<Board &>(b).unmakeMove(m);
                 }
-                const_cast<Board&>(b).unmakeMove(m);
+                if (!castleCheck) {
+                    moves.emplace_back(this, b.getPiece(x + 3, y), x, y, x + 2, y, Move::MoveType::Castle);
+                }
             }
-            if(!castleCheck) {
-                moves.emplace_back(this, b.getPiece(x + 3, y), x, y, x + 2, y, Move::MoveType::Castle);
+        }
+    }
+    //Right Side castle
+    if (onBoard(x + 3)) {
+        const Piece* rook = b.getPiece(x + 3, y);
+        if (!hasMoved && rook && rook->getPieceType() == "Rook" && !rook->getHasMoved()) {
+            if (!b.getPiece(x + 1, y) && !b.getPiece(x + 2, y) && !inCheck(b)) {
+                bool castleCheck = false;
+                for (const auto dx : {1, 2}) {
+                    auto m = Move(this, b.getPiece(x + dx, y), x, y, x + dx, y);
+                    const_cast<Board &>(b).makeMove(m);
+                    if (inCheck(b)) {
+                        castleCheck = true;
+                    }
+                    const_cast<Board &>(b).unmakeMove(m);
+                }
+                if (!castleCheck) {
+                    moves.emplace_back(this, b.getPiece(x + 3, y), x, y, x + 2, y, Move::MoveType::Castle);
+                }
             }
         }
     }
 
+    //Left Side castle
+    if (onBoard(x - 4)) {
+        const Piece* rook = b.getPiece(x - 4, y);
+        if (!hasMoved && rook && rook->getPieceType() == "Rook" && !rook->getHasMoved()) {
+            if (!b.getPiece(x - 1, y) && !b.getPiece(x - 2, y) && !b.getPiece(x - 3, y)) {
+                bool castleCheck = false;
+                for (const auto dx : {-1, -2}) {
+                    auto m = Move(this, b.getPiece(x + dx, y), x, y, x + dx, y);
+                    const_cast<Board &>(b).makeMove(m);
+                    if (inCheck(b)) {
+                        castleCheck = true;
+                    }
+                    const_cast<Board &>(b).unmakeMove(m);
+                }
+                if (!castleCheck) {
+                    moves.emplace_back(this, b.getPiece(x - 4, y), x, y, x - 2, y, Move::MoveType::Castle);
+                }
+            }
+        }
+    }
 }
 
 bool King::inCheck(const Board &b) const
@@ -210,7 +251,8 @@ bool King::inCheck(const Board &b) const
     // Tall knight moves
     for (const int dx : {-2, 2}) {
         for (const int dy : {-1, 1}) {
-            if (onBoard(x + dx) && onBoard(y + dy) && b.getPiece(x + dx, y + dy) && b.getPiece(x + dx, y + dy)->isWhite() != white && b.getPiece(x + dx, y + dy)->getPieceType() == "Knight") {
+            if (onBoard(x + dx) && onBoard(y + dy) && b.getPiece(x + dx, y + dy) && b.getPiece(x + dx, y + dy)->isWhite() != white && b.getPiece(x + dx, y + dy)->getPieceType() ==
+                "Knight") {
                 return true;
             }
         }
@@ -219,7 +261,28 @@ bool King::inCheck(const Board &b) const
     // Wide knight moves
     for (const int dx : {-1, 1}) {
         for (const int dy : {-2, 2}) {
-            if (onBoard(x + dx) && onBoard(y + dy) && b.getPiece(x + dx, y + dy) && b.getPiece(x + dx, y + dy)->isWhite() != white && b.getPiece(x + dx, y + dy)->getPieceType() == "Knight") {
+            if (onBoard(x + dx) && onBoard(y + dy) && b.getPiece(x + dx, y + dy) && b.getPiece(x + dx, y + dy)->isWhite() != white && b.getPiece(x + dx, y + dy)->getPieceType() ==
+                "Knight") {
+                return true;
+            }
+        }
+    }
+
+    //King check
+    for (const int dx : {-1, 0, 1}) {
+        for (const int dy : {-1, 0, 1}) {
+            if (onBoard(x + dx) && onBoard(y + dy) && b.getPiece(x + dx, y + dy)) {
+                if (b.getPiece(x + dx, y + dy)->getPieceType() == "King" && b.getPiece(x + dx, y + dy)->isWhite() != isWhite()) {
+                    return true;
+                }
+            }
+        }
+    }
+    //Pawn check
+    const int dy = white ? -1 : 1;
+    for (int dx : {-1, 1}) {
+        if (onBoard(x + dx) && onBoard(y + dy) && b.getPiece(x + dx, y + dy)) {
+            if (b.getPiece(x + dx, y + dy)->getPieceType() == "Pawn" && b.getPiece(x + dx, y + dy)->isWhite() != isWhite()) {
                 return true;
             }
         }

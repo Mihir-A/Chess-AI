@@ -5,12 +5,6 @@ class Move;
 
 class Board
 {
-private:
-    std::array<std::array<Piece *, 8>, 8> b{};
-    std::vector<const Piece *> whitePieces;
-    std::vector<const Piece *> blackPieces;
-    void decipherFenBoard(std::string::const_iterator& it);
-
 public:
     Board();
     explicit Board(const std::string &fenStr);
@@ -21,4 +15,10 @@ public:
     const std::vector<const Piece *>& getWhitePieces() const;
     const std::vector<const Piece *>& getBlackPieces() const;
     void decipherFen(const std::string &fen);
+private:
+    std::array<std::array<Piece *, 8>, 8> b{};
+    std::vector<const Piece *> whitePieces;
+    std::vector<const Piece *> blackPieces;
+    void decipherFenBoard(std::string::const_iterator &it);
+    void movePiece(Piece* p, int x, int y);
 };

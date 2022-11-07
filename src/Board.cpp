@@ -6,11 +6,12 @@
 #include "Rook.h"
 #include "Pawn.h"
 #include "Move.h"
+//"k7/8/8/8/8/8/P7/R3K1NR w KQkq - 0 1"
 //"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
-Board::Board() : Board("k7/8/8/8/8/8/8/4K1NR w KQkq - 0 1")
+Board::Board() : Board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
 {}
 
-Board::Board(const std::string& fenStr)
+Board::Board(const std::string &fenStr)
 {
     whitePieces.reserve(16);
     blackPieces.reserve(16);
@@ -40,60 +41,63 @@ void Board::makeMove(const Move &m)
         }
 
         //This cast gets rid of const
-        b[m.getNewY()][m.getNewX()] = const_cast<Piece*>(m.getMovingPiece());
-        b[m.getNewY()][m.getNewX()]->moveTo(m.getNewX(), m.getNewY());
+        movePiece(const_cast<Piece *>(m.getMovingPiece()), m.getNewX(), m.getNewY());
 
         b[m.getOldY()][m.getOldX()] = nullptr;
     }
     else if (m.getMoveType() == Move::MoveType::Castle) {
+        // Moves King
+        movePiece(const_cast<Piece *>(m.getMovingPiece()), m.getNewX(), m.getNewY());
+        b[m.getOldY()][m.getOldX()] = nullptr;
 
+        //Rook moves depending on the side
         if (m.getNewX() > m.getOldX()) {
-            // Moves King
-            b[m.getNewY()][m.getNewX()] = const_cast<Piece*>(m.getMovingPiece());
-            b[m.getNewY()][m.getNewX()]->moveTo(m.getNewX(), m.getNewY());
-            b[m.getOldY()][m.getOldX()] = nullptr;
             //Moves Rook
-            b[m.getNewY()][m.getNewX() - 1] = const_cast<Piece*>(m.getTargetedPiece());
-            b[m.getNewY()][m.getNewX() - 1]->moveTo(m.getNewX() - 1, m.getNewY());
+            movePiece(const_cast<Piece *>(m.getTargetedPiece()), m.getNewX() - 1, m.getNewY());
             b[m.getNewY()][m.getNewX() + 1] = nullptr;
         }
+        else {
+            //Moves Rook
+            movePiece(const_cast<Piece *>(m.getTargetedPiece()), m.getNewX() + 1, m.getNewY());
+            b[m.getNewY()][m.getNewX() - 2] = nullptr;
+        }
     }
-    
 }
 
 void Board::unmakeMove(const Move &m)
 {
     if (m.getMoveType() == Move::MoveType::Normal) {
         if (m.getTargetedPiece()) {
-            b[m.getNewY()][m.getNewX()] = const_cast<Piece*>(m.getTargetedPiece());
+            movePiece(const_cast<Piece *>(m.getTargetedPiece()), m.getNewX(), m.getNewY());
             b[m.getNewY()][m.getNewX()]->setKill(false);
-            b[m.getNewY()][m.getNewX()]->moveTo(m.getNewX(), m.getNewY());
             b[m.getNewY()][m.getNewX()]->setHasMoved(m.isTargetedFirst());
         }
         else {
             b[m.getNewY()][m.getNewX()] = nullptr;
         }
-
-        b[m.getOldY()][m.getOldX()] = const_cast<Piece*>(m.getMovingPiece());
-        b[m.getOldY()][m.getOldX()]->moveTo(m.getOldX(), m.getOldY());
+        movePiece(const_cast<Piece *>(m.getMovingPiece()), m.getOldX(), m.getOldY());
         b[m.getOldY()][m.getOldX()]->setHasMoved(m.isMovingFirst());
 
-    }else if (m.getMoveType() == Move::MoveType::Castle) {
-        if (m.getNewX() > m.getOldX()) {
-            // Moves King
-            //TODO: fix read access violation
-            b[m.getOldY()][m.getOldX()] = const_cast<Piece*>(m.getMovingPiece());
-            b[m.getOldY()][m.getOldX()]->moveTo(m.getOldX(), m.getOldY());
-            b[m.getNewY()][m.getNewY()] = nullptr;
-            //Moves Rook
-            b[m.getOldY()][m.getOldX() - 1] = const_cast<Piece*>(m.getTargetedPiece());
-            b[m.getOldY()][m.getOldX() - 1]->moveTo(m.getOldX() - 1, m.getOldY());
-            b[m.getNewY()][m.getNewX() + 1] = nullptr;
-            b[m.getOldY()][m.getOldX() - 1]->setHasMoved(m.isTargetedFirst());
-        }
-        b[m.getNewY()][m.getNewY()]->setHasMoved(m.getMovingPiece());
     }
-    
+    else if (m.getMoveType() == Move::MoveType::Castle) {
+        // Moves King
+        movePiece(const_cast<Piece *>(m.getMovingPiece()), m.getOldX(), m.getOldY());
+        b[m.getNewY()][m.getNewX()] = nullptr;
+
+        if (m.getNewX() > m.getOldX()) {
+            //Moves Rook
+            movePiece(const_cast<Piece *>(m.getTargetedPiece()), m.getNewX() + 1, m.getNewY());
+            b[m.getNewY()][m.getNewX() - 1] = nullptr;
+            b[m.getNewY()][m.getNewX() + 1]->setHasMoved(m.isTargetedFirst());
+        }
+        else {
+            //Moves Rook
+            movePiece(const_cast<Piece *>(m.getTargetedPiece()), m.getNewX() - 2, m.getNewY());
+            b[m.getNewY()][m.getNewX() + 1] = nullptr;
+            b[m.getNewY()][m.getNewX() - 2]->setHasMoved(m.isTargetedFirst());
+        }
+        b[m.getOldY()][m.getOldX()]->setHasMoved(m.isMovingFirst());
+    }
 }
 
 const std::vector<const Piece *>& Board::getWhitePieces() const
@@ -106,19 +110,20 @@ const std::vector<const Piece *>& Board::getBlackPieces() const
     return blackPieces;
 }
 
-void Board::decipherFenBoard(std::string::const_iterator& it)
+void Board::decipherFenBoard(std::string::const_iterator &it)
 {
     int px = 0, py = 0;
-    for (; true ; ++it) {
+    for (; true; ++it) {
         const int num = *it - '0';
 
-        if (num >= 1 && num <=8) {
+        if (num >= 1 && num <= 8) {
             px += num;
         }
         else if (*it == '/') {
             py++;
             px = 0;
-        }else {
+        }
+        else {
             switch (*it) {
             default:
                 break;
@@ -159,9 +164,10 @@ void Board::decipherFenBoard(std::string::const_iterator& it)
                 b[py][px] = new Bishop(true, px, py);
                 break;
             }
-            if(isupper(*it)) {
+            if (isupper(*it)) {
                 whitePieces.push_back(getPiece(px, py));
-            }else {
+            }
+            else {
                 blackPieces.push_back(getPiece(px, py));
             }
             px++;
@@ -173,15 +179,19 @@ void Board::decipherFenBoard(std::string::const_iterator& it)
     }
 }
 
+void Board::movePiece(Piece* p, int x, int y)
+{
+    b[y][x] = p;
+    b[y][x]->moveTo(x, y);
+}
+
 void Board::decipherFen(const std::string &fen)
 {
-    for (auto& row : b) {
+    for (auto &row : b) {
         std::ranges::fill(row, nullptr);
     }
 
     auto it = fen.begin();
 
     decipherFenBoard(it);
-    return;
 }
-

@@ -9,7 +9,8 @@ Move::Move(const Piece* movingPiece, const Piece* targetedPiece, int oldX, int o
 {
     if (targetedPiece) {
         firstMoveTargeted = targetedPiece->getHasMoved();
-    }else {
+    }
+    else {
         firstMoveTargeted = false;
     }
 }
@@ -57,13 +58,7 @@ int Move::getNewX() const
 
 bool Move::operator==(const Move &other) const
 {
- //   if(other.getMoveType() == MoveType::Castle || getMoveType() == MoveType::Castle) {
-   //     //Since checks' second piece is the rook not the king move attempt. The check needs to be different
-    //    auto& castleMove = getMoveType() != MoveType::Castle ? other : *this;
-     //   auto& otherMove = getMoveType() == MoveType::Castle ? other : *this;
-   // }else {
-        return (other.newX == newX && other.newY == newY && other.oldX == oldX && other.oldY == oldY && other.movingPiece == movingPiece);
-  //  }
+    return (other.newX == newX && other.newY == newY && other.oldX == oldX && other.oldY == oldY && other.movingPiece == movingPiece);
 }
 
 Move::MoveType Move::getMoveType() const
@@ -71,7 +66,7 @@ Move::MoveType Move::getMoveType() const
     return moveType;
 }
 
-void Move::setMoveType(const MoveType moveType)
+void Move::setMoveType(const MoveType newMoveType)
 {
-    this->moveType = moveType;
+    this->moveType = newMoveType;
 }

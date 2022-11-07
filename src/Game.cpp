@@ -6,16 +6,19 @@
 
 Game::Game()
     : windowSize(800)
-    , window(sf::VideoMode(windowSize, windowSize), "Chess", sf::Style::Titlebar + sf::Style::Close + sf::Style::Resize)
-    , brownSquare(sf::Vector2f(windowSize / 8.0f, windowSize / 8.0f))
-    , yellowSquare(sf::Vector2f(windowSize / 8.0f, windowSize / 8.0f))
-    , redSquare(sf::Vector2f(windowSize / 8.0f, windowSize / 8.0f))
-    , heldPiece(nullptr)
-    , recentPiece(nullptr)
+      , window(sf::VideoMode(windowSize, windowSize), "Chess", sf::Style::Titlebar + sf::Style::Close + sf::Style::Resize)
+      , brownSquare(sf::Vector2f(windowSize / 8.0f, windowSize / 8.0f))
+      , yellowSquare(sf::Vector2f(windowSize / 8.0f, windowSize / 8.0f))
+      , redSquare(sf::Vector2f(windowSize / 8.0f, windowSize / 8.0f))
+      , moveHint(15)
+      , heldPiece(nullptr)
+      , recentPiece(nullptr)
 {
     brownSquare.setFillColor(sf::Color(181, 136, 99));// Tan color of the board
     yellowSquare.setFillColor(sf::Color(255, 255, 0, 130));// yellow color of the selected piece
-    redSquare.setFillColor(sf::Color(235, 97, 80, 204));
+    redSquare.setFillColor(sf::Color(235, 97, 80, 204));//Color of king when in check
+    moveHint.setFillColor(sf::Color(0, 0, 0, 25));
+    moveHint.setOrigin(moveHint.getRadius(), moveHint.getRadius());
 
     playedMoves.reserve(10);
 
@@ -26,10 +29,8 @@ Game::Game()
 
 void Game::play()
 {
-    float fps;
-    sf::Clock clock = sf::Clock::Clock();
-    sf::Time previousTime = clock.getElapsedTime();
-    sf::Time currentTime;
+    const auto clock = sf::Clock::Clock();
+    sf::Time previousTime = sf::Clock::Clock().getElapsedTime();
 
     while (window.isOpen()) {
         sf::Event event;
@@ -106,9 +107,9 @@ void Game::play()
             }
         }
         draw();
-        currentTime = clock.getElapsedTime();
-        fps = 1.0f / (currentTime.asSeconds() - previousTime.asSeconds()); // the asSeconds returns a float
-        //std::cout << "fps =" << floor(fps) << std::endl; // flooring it will make the frame rate a rounded number
+
+        sf::Time currentTime = clock.getElapsedTime();
+        std::cout << "fps =" << floor(1.0f / (currentTime.asSeconds() - previousTime.asSeconds())) << std::endl; // flooring it will make the frame rate a rounded number
         previousTime = currentTime;
     }
 }
@@ -141,9 +142,11 @@ void Game::draw()
     }
 
     //Highlights king in red if in check
-    for (const auto piece : whiteTurn ? board.getWhitePieces() : board.getBlackPieces()) {
-        if (piece->getPieceType() == "King" && dynamic_cast<const King *>(piece)->inCheck(board)) {
-            drawRedSquare(piece->getX() * gSize, piece->getY() * gSize);
+    if (inCheck) {
+        for (const auto piece : whiteTurn ? board.getWhitePieces() : board.getBlackPieces()) {
+            if (piece->getPieceType() == "King") {
+                drawRedSquare(piece->getX() * gSize, piece->getY() * gSize);
+            }
         }
     }
 
@@ -176,6 +179,17 @@ void Game::draw()
         }
     }
 
+    //draws the piece hints
+    const std::vector<Move> &playerMoves = whiteTurn ? whiteMoves : blackMoves;
+    if (heldPiece) {
+        for (const auto &m : playerMoves) {
+            if (m.getMovingPiece() == heldPiece) {
+                moveHint.setPosition((m.getNewX() + 0.5f) * gSize, (m.getNewY() + 0.5f) * gSize);
+                window.draw(moveHint);
+            }
+        }
+    }
+
     // The held piece should be drawn over others
     window.draw(heldSprite);
     window.display();
@@ -195,6 +209,7 @@ void Game::drawRedSquare(float x, float y)
 
 void Game::getMoves()
 {
+    inCheck = false;
     std::vector<Move> &playerMoves = whiteTurn ? whiteMoves : blackMoves;
     const std::vector<const Piece *> &playerPieces = whiteTurn ? board.getWhitePieces() : board.getBlackPieces();
 
@@ -218,12 +233,12 @@ void Game::getMoves()
     //These moves are removed from the list
     const auto it = std::ranges::remove_if(playerMoves, [this, &king](const Move &m)
     {
-        //board.makeMove(m);
+        board.makeMove(m);
         if (king->inCheck(board)) {
             board.unmakeMove(m);
             return true;
         }
-       // board.unmakeMove(m);
+        board.unmakeMove(m);
         return false;
     }).begin();
 
@@ -237,6 +252,13 @@ void Game::getMoves()
         std::cout << a.getMovingPiece()->getPieceType() << " from " << a.getOldX() << " " << 7 - a.getOldY() << " to " << a.getNewX() << " " << 7 - a.getNewY() << '\n';
     }
     std::cout << "\n\n\n";
+
+    //Checks if the current player is in check
+    for (const auto piece : whiteTurn ? board.getWhitePieces() : board.getBlackPieces()) {
+        if (piece->getPieceType() == "King" && dynamic_cast<const King *>(piece)->inCheck(board)) {
+            inCheck = true;
+        }
+    }
 }
 
 bool Game::canMove(Move &m) const
@@ -246,7 +268,7 @@ bool Game::canMove(Move &m) const
     for (const Move &move : possibleMoves) {
         if (m == move) {
             //This will add the necessary settings to the move
-            if(move.getMoveType() == Move::MoveType::Castle) {
+            if (move.getMoveType() == Move::MoveType::Castle) {
                 m = move;
             }
             return true;

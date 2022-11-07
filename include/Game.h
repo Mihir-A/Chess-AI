@@ -22,8 +22,10 @@ private:
     sf::RectangleShape brownSquare;
     sf::RectangleShape yellowSquare;
     sf::RectangleShape redSquare;
+    sf::CircleShape moveHint;
     const Piece* heldPiece;
     const Piece* recentPiece;
+    bool inCheck;
     bool whiteTurn;
     std::vector<Move> whiteMoves;
     std::vector<Move> blackMoves;

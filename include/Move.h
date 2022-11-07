@@ -3,9 +3,9 @@
 
 class Move
 {
-
 public:
     enum class MoveType { Normal, Castle, EnPassant, Promotion };
+
     Move(const Piece* movingPiece, const Piece* targetedPiece, int oldX, int oldY, int newX, int newY);
     Move(const Piece* movingPiece, const Piece* targetedPiece, int oldX, int oldY, int newX, int newY, MoveType moveType);
     const Piece* getMovingPiece() const;
@@ -20,7 +20,7 @@ public:
     MoveType getMoveType() const;
     void setMoveType(MoveType moveType);
 private:
-    const Piece* movingPiece, * targetedPiece;
+    const Piece *movingPiece, *targetedPiece;
     int oldX, oldY, newX, newY;
     bool firstMoveMoving, firstMoveTargeted;
     MoveType moveType;

@@ -29,8 +29,8 @@ Game::Game()
 
 void Game::play()
 {
-    const auto clock = sf::Clock::Clock();
-    sf::Time previousTime = sf::Clock::Clock().getElapsedTime();
+    const auto clock = sf::Clock();
+    sf::Time previousTime = sf::Clock().getElapsedTime();
 
     while (window.isOpen()) {
         sf::Event event;
@@ -231,7 +231,7 @@ void Game::getMoves()
 
     //This lambda plays all possible moves and then checks if they cause the king to be in check
     //These moves are removed from the list
-    const auto it = std::ranges::remove_if(playerMoves, [this, &king](const Move &m)
+    const auto it = std::remove_if(playerMoves.begin(), playerMoves.end(), [this, &king](const Move &m)
     {
         board.makeMove(m);
         if (king->inCheck(board)) {
@@ -240,7 +240,9 @@ void Game::getMoves()
         }
         board.unmakeMove(m);
         return false;
-    }).begin();
+    });
+    
+
 
     playerMoves.erase(it, playerMoves.end());
 

@@ -188,7 +188,7 @@ void Board::movePiece(Piece* p, int x, int y)
 void Board::decipherFen(const std::string &fen)
 {
     for (auto &row : b) {
-        std::ranges::fill(row, nullptr);
+        std::fill(row.begin(), row.end(), nullptr);
     }
 
     auto it = fen.begin();

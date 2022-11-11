@@ -10,18 +10,21 @@ Game::Game()
       , brownSquare(sf::Vector2f(windowSize / 8.0f, windowSize / 8.0f))
       , yellowSquare(sf::Vector2f(windowSize / 8.0f, windowSize / 8.0f))
       , redSquare(sf::Vector2f(windowSize / 8.0f, windowSize / 8.0f))
+      , highlightSquare(sf::Vector2f(windowSize / 8.0f - 10, windowSize / 8.0f - 10))
       , moveHint(15)
       , heldPiece(nullptr)
       , recentPiece(nullptr)
+      , gameOver(true)
 {
     brownSquare.setFillColor(sf::Color(181, 136, 99));// Tan color of the board
     yellowSquare.setFillColor(sf::Color(255, 255, 0, 130));// yellow color of the selected piece
     redSquare.setFillColor(sf::Color(235, 97, 80, 204));//Color of king when in check
+    highlightSquare.setFillColor(sf::Color(0, 0, 0, 0));
+    highlightSquare.setOutlineColor(sf::Color(255, 255, 255, 166));
+    highlightSquare.setOutlineThickness(5);
     moveHint.setFillColor(sf::Color(0, 0, 0, 25));
     moveHint.setOrigin(moveHint.getRadius(), moveHint.getRadius());
-
     playedMoves.reserve(10);
-
     whiteTurn = true;
     getMoves();
     window.setVerticalSyncEnabled(true);
@@ -62,7 +65,7 @@ void Game::play()
                     }
                 }
             }
-            else if (event.type == sf::Event::MouseButtonReleased && heldPiece != nullptr) {
+            else if (event.type == sf::Event::MouseButtonReleased && heldPiece) {
                 // X and Y coordinate of the grid where the mouse is clicked
                 const int xCord = event.mouseButton.x / (windowSize / 8);
                 const int yCord = event.mouseButton.y / (windowSize / 8);
@@ -89,10 +92,15 @@ void Game::play()
                 heldPiece = nullptr;
             }
             else if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::D) {
-                board.unmakeMove(playedMoves[playedMoves.size() - 1]);
-                playedMoves.pop_back();
-                whiteTurn = !whiteTurn;
-                getMoves();
+                if (!playedMoves.empty()) {
+                    board.unmakeMove(playedMoves[playedMoves.size() - 1]);
+                    playedMoves.pop_back();
+                    whiteTurn = !whiteTurn;
+                    getMoves();
+                }
+            }
+            else if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::R && gameOver == true) {
+                reset();
             }
             else if (event.type == sf::Event::Resized) {
                 // Makes sure the window is always a square
@@ -189,6 +197,27 @@ void Game::draw()
             }
         }
     }
+    else if (recentPiece) {
+        for (const auto &m : playerMoves) {
+            if (m.getMovingPiece() == recentPiece) {
+                moveHint.setPosition((m.getNewX() + 0.5f) * gSize, (m.getNewY() + 0.5f) * gSize);
+                window.draw(moveHint);
+            }
+        }
+    }
+
+    //Draws a box around highlighted piece
+    if (heldPiece) {
+        constexpr int offset = 5;
+        const int mouseX = sf::Mouse::getPosition(window).x * 800 / windowSize;
+        const int mouseY = sf::Mouse::getPosition(window).y * 800 / windowSize;
+        //Conversion rounds Mouse to nearest box
+        const int xCord = mouseX / static_cast<int>(gSize) * gSize + offset;// NOLINT
+        const int yCord = mouseY / static_cast<int>(gSize) * gSize + offset;// NOLINT
+
+        highlightSquare.setPosition(xCord, yCord);
+        window.draw(highlightSquare);
+    }
 
     // The held piece should be drawn over others
     window.draw(heldSprite);
@@ -205,6 +234,20 @@ void Game::drawRedSquare(float x, float y)
 {
     redSquare.setPosition(x, y);
     window.draw(redSquare);
+}
+
+void Game::checkGameOver()
+{
+    const std::vector<Move> &playerMoves = whiteTurn ? whiteMoves : blackMoves;
+    if (playerMoves.empty()) {
+        if (inCheck) {
+            std::cout << (whiteTurn ? "White" : "Black") << " is in checkmate";
+        }
+        else {
+            std::cout << (whiteTurn ? "White" : "Black") << " is in stalemate";
+        }
+        gameOver = true;
+    }
 }
 
 void Game::getMoves()
@@ -241,8 +284,6 @@ void Game::getMoves()
         board.unmakeMove(m);
         return false;
     });
-    
-
 
     playerMoves.erase(it, playerMoves.end());
 
@@ -261,6 +302,8 @@ void Game::getMoves()
             inCheck = true;
         }
     }
+
+    checkGameOver();
 }
 
 bool Game::canMove(Move &m) const
@@ -278,4 +321,19 @@ bool Game::canMove(Move &m) const
     }
 
     return false;
+}
+
+void Game::reset()
+{
+    board.decipherFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
+    gameOver = false;
+    heldPiece = nullptr;
+    recentPiece = nullptr;
+    inCheck = false;
+    whiteTurn = true;
+    whiteMoves.clear();
+    blackMoves.clear();
+    playedMoves.clear();
+    playedMoves.reserve(10);
+    getMoves();
 }

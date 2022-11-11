@@ -14,14 +14,17 @@ private:
     void draw();
     void drawYellowSquare(float x, float y);
     void drawRedSquare(float x, float y);
+    void checkGameOver();
     void getMoves();
     bool canMove(Move &m) const;
+    void reset();
     unsigned int windowSize;
     sf::RenderWindow window;
     Board board;
     sf::RectangleShape brownSquare;
     sf::RectangleShape yellowSquare;
     sf::RectangleShape redSquare;
+    sf::RectangleShape highlightSquare;
     sf::CircleShape moveHint;
     const Piece* heldPiece;
     const Piece* recentPiece;
@@ -30,4 +33,5 @@ private:
     std::vector<Move> whiteMoves;
     std::vector<Move> blackMoves;
     std::vector<Move> playedMoves;
+    bool gameOver;
 };

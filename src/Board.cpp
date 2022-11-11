@@ -18,16 +18,6 @@ Board::Board(const std::string &fenStr)
     decipherFen(fenStr);
 }
 
-Board::~Board()
-{
-    for (const auto piece : whitePieces) {
-        delete piece;
-    }
-    for (const auto piece : blackPieces) {
-        delete piece;
-    }
-}
-
 const Piece* Board::getPiece(unsigned int x, unsigned int y) const
 {
     return b[y][x];
@@ -187,6 +177,16 @@ void Board::movePiece(Piece* p, int x, int y)
 
 void Board::decipherFen(const std::string &fen)
 {
+    for (const auto piece : whitePieces) {
+        delete piece;
+    }
+    for (const auto piece : blackPieces) {
+        delete piece;
+    }
+    whitePieces.clear();
+    blackPieces.clear();
+
+
     for (auto &row : b) {
         std::fill(row.begin(), row.end(), nullptr);
     }

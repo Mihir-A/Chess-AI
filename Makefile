@@ -1,7 +1,7 @@
 # tool macros
 CXX ?= g++
-CFLAGS := -O2 -std=c++17 -I include/  -L lib/ -lsfml-graphics -lsfml-window -lsfml-system -pipe -Wno-unused-command-line-argument
-COBJFLAGS := $(CFLAGS) -c
+CFLAGS := -O2 -std=c++17 -I include/  -L lib/ -lsfml-graphics -lsfml-window -lsfml-system -pipe 
+COBJFLAGS := -O2 -std=c++17 -I include/ -c
 
 # path macros
 BIN_PATH := bin

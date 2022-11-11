@@ -8,7 +8,6 @@ class Board
 public:
     Board();
     explicit Board(const std::string &fenStr);
-    ~Board();
     const Piece* getPiece(unsigned int x, unsigned int y) const;
     void makeMove(const Move &m);
     void unmakeMove(const Move &m);

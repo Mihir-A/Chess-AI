@@ -1,17 +1,24 @@
 #include "Move.h"
 
+Move::Move()
+    :Move(nullptr, nullptr, -1, -1, -1, -1, MoveType::Undefined)
+{}
+
 Move::Move(const Piece* movingPiece, const Piece* targetedPiece, int oldX, int oldY, int newX, int newY)
     : Move(movingPiece, targetedPiece, oldX, oldY, newX, newY, MoveType::Normal)
 {}
 
 Move::Move(const Piece* movingPiece, const Piece* targetedPiece, int oldX, int oldY, int newX, int newY, MoveType moveType)
-    : movingPiece(movingPiece), targetedPiece(targetedPiece), oldX(oldX), oldY(oldY), newX(newX), newY(newY), firstMoveMoving(movingPiece->getHasMoved()), moveType(moveType)
+    : movingPiece(movingPiece), targetedPiece(targetedPiece), oldX(oldX), oldY(oldY), newX(newX), newY(newY), firstMoveMoving(false), firstMoveTargeted(false), moveType(moveType)
 {
-    if (targetedPiece) {
-        firstMoveTargeted = targetedPiece->getHasMoved();
-    }
-    else {
-        firstMoveTargeted = false;
+    if (moveType != MoveType::Undefined) {
+        if (targetedPiece) {
+            firstMoveTargeted = targetedPiece->getHasMoved();
+        }
+        else {
+            firstMoveTargeted = false;
+        }
+        firstMoveMoving = movingPiece->getHasMoved();
     }
 }
 

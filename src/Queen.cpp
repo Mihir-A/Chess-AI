@@ -3,7 +3,7 @@
 #include "Board.h"
 
 Queen::Queen(bool white, int x, int y)
-    : Piece(white, x, y, "Queen")
+    : Piece(white, x, y, Type::Queen)
 {
     if (white) {
         texture.loadFromFile("assets/piece/wq.png");

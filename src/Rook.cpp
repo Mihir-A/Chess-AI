@@ -3,7 +3,7 @@
 #include "Board.h"
 
 Rook::Rook(bool white, int x, int y)
-    : Piece(white, x, y, "Rook")
+    : Piece(white, x, y, Type::Rook)
 {
     if (white) {
         texture.loadFromFile("assets/piece/wr.png");

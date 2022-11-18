@@ -3,7 +3,7 @@
 #include "Board.h"
 
 Bishop::Bishop(bool white, int x, int y)
-    : Piece(white, x, y, "Bishop")
+    : Piece(white, x, y, Type::Bishop)
 {
     if (white) {
         texture.loadFromFile("assets/piece/wb.png");

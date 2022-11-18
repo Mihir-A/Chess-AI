@@ -8,7 +8,7 @@
 #include "Move.h"
 //"k7/8/8/8/8/8/P7/R3K1NR w KQkq - 0 1"
 //"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
-Board::Board() : Board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
+Board::Board() : Board("4kn2/Q7/4K3/8/8/8/8/8 w KQkq - 0 1")
 {}
 
 Board::Board(const std::string &fenStr)
@@ -16,6 +16,7 @@ Board::Board(const std::string &fenStr)
     whitePieces.reserve(16);
     blackPieces.reserve(16);
     decipherFen(fenStr);
+    whiteTurn = true;
 }
 
 const Piece* Board::getPiece(unsigned int x, unsigned int y) const
@@ -67,7 +68,6 @@ void Board::unmakeMove(const Move &m)
         }
         movePiece(const_cast<Piece *>(m.getMovingPiece()), m.getOldX(), m.getOldY());
         b[m.getOldY()][m.getOldX()]->setHasMoved(m.isMovingFirst());
-
     }
     else if (m.getMoveType() == Move::MoveType::Castle) {
         // Moves King
@@ -194,4 +194,19 @@ void Board::decipherFen(const std::string &fen)
     auto it = fen.begin();
 
     decipherFenBoard(it);
+}
+
+void Board::changeTurn()
+{
+    whiteTurn = !whiteTurn;
+}
+
+bool Board::isWhiteTurn() const
+{
+    return whiteTurn;
+}
+
+void Board::setWhiteTurn(bool t)
+{
+    whiteTurn = t;
 }

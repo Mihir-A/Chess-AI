@@ -3,7 +3,7 @@
 #include "Board.h"
 
 Knight::Knight(bool white, int x, int y)
-    : Piece(white, x, y, "Knight")
+    : Piece(white, x, y, Type::Knight)
 {
     if (white) {
         texture.loadFromFile("assets/piece/wn.png");

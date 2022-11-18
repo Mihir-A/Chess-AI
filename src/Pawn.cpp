@@ -3,7 +3,7 @@
 #include "Board.h"
 
 Pawn::Pawn(bool white, int x, int y)
-    : Piece(white, x, y, "Pawn")
+    : Piece(white, x, y, Type::Pawn)
 {
     if (white) {
         texture.loadFromFile("assets/piece/wp.png");

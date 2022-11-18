@@ -1,13 +1,13 @@
 #include "Piece.h"
 
 
-Piece::Piece(bool white, int x, int y, const std::string &name)
+Piece::Piece(bool white, int x, int y, Type pieceType)
     : hasMoved(false)
       , white(white)
       , x(x)
       , y(y)
       , dead(false)
-      , tName(name)
+      , pieceType(pieceType)
 {
     this->texture.setSmooth(true);
 }
@@ -30,6 +30,11 @@ bool Piece::isWhite() const
 const sf::Texture& Piece::getTexture() const
 {
     return texture;
+}
+
+Piece::Type Piece::getPieceType() const
+{
+    return pieceType;
 }
 
 int Piece::getX() const
@@ -62,9 +67,4 @@ void Piece::setKill(bool killed)
 bool Piece::onBoard(int p)
 {
     return (p > -1 && p < 8);
-}
-
-const std::string& Piece::getPieceType() const
-{
-    return tName;
 }

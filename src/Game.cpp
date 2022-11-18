@@ -1,8 +1,13 @@
 #include "Game.h"
 #include "Piece.h"
 #include "King.h"
+#include "Node.h"
+#include <chrono>
+#include <thread>
+#include <future>
 #include <iostream>
 
+std::future<void> f;
 
 Game::Game()
     : windowSize(800)
@@ -15,6 +20,7 @@ Game::Game()
       , heldPiece(nullptr)
       , recentPiece(nullptr)
       , gameOver(true)
+      , ai(board)
 {
     brownSquare.setFillColor(sf::Color(181, 136, 99));// Tan color of the board
     yellowSquare.setFillColor(sf::Color(255, 255, 0, 130));// yellow color of the selected piece
@@ -25,16 +31,12 @@ Game::Game()
     moveHint.setFillColor(sf::Color(0, 0, 0, 25));
     moveHint.setOrigin(moveHint.getRadius(), moveHint.getRadius());
     playedMoves.reserve(10);
-    whiteTurn = true;
     getMoves();
     window.setVerticalSyncEnabled(true);
 }
 
 void Game::play()
 {
-    const auto clock = sf::Clock();
-    sf::Time previousTime = sf::Clock().getElapsedTime();
-
     while (window.isOpen()) {
         sf::Event event;
         while (window.pollEvent(event)) {
@@ -42,13 +44,12 @@ void Game::play()
             if (event.type == sf::Event::Closed) {
                 window.close();
             }
-
             else if (event.type == sf::Event::MouseButtonPressed) {
                 // X and Y coordinates of the grid where the mouse is clicked
                 const unsigned int xCord = event.mouseButton.x / (windowSize / 8);
                 const unsigned int yCord = event.mouseButton.y / (windowSize / 8);
 
-                if (board.getPiece(xCord, yCord) != nullptr && board.getPiece(xCord, yCord)->isWhite() == whiteTurn) {
+                if (board.getPiece(xCord, yCord) != nullptr && board.getPiece(xCord, yCord)->isWhite() == board.isWhiteTurn()) {
                     //Finds piece that the mouse is over when it clicks
                     heldPiece = board.getPiece(xCord, yCord);
                 }
@@ -56,10 +57,10 @@ void Game::play()
                     //This runs if a piece is already selected and wants to move to the space
                     auto attemptedMove = Move(recentPiece, board.getPiece(xCord, yCord), recentPiece->getX(), recentPiece->getY(), xCord, yCord);
 
-                    if (canMove(attemptedMove) && recentPiece->isWhite() == whiteTurn) {
+                    if (canMove(attemptedMove) && recentPiece->isWhite() == board.isWhiteTurn()) {
                         board.makeMove(attemptedMove);
                         playedMoves.push_back(attemptedMove);
-                        whiteTurn = !whiteTurn;
+                        board.changeTurn();
                         getMoves();
                         recentPiece = nullptr;
                     }
@@ -84,7 +85,7 @@ void Game::play()
                     if (canMove(attemptedMove)) {
                         board.makeMove(attemptedMove);
                         playedMoves.push_back(attemptedMove);
-                        whiteTurn = !whiteTurn;
+                        board.changeTurn();
                         getMoves();
                         recentPiece = nullptr;
                     }
@@ -95,7 +96,7 @@ void Game::play()
                 if (!playedMoves.empty()) {
                     board.unmakeMove(playedMoves[playedMoves.size() - 1]);
                     playedMoves.pop_back();
-                    whiteTurn = !whiteTurn;
+                    board.changeTurn();
                     getMoves();
                 }
             }
@@ -115,10 +116,11 @@ void Game::play()
             }
         }
         draw();
-
-        sf::Time currentTime = clock.getElapsedTime();
-        //std::cout << "fps =" << floor(1.0f / (currentTime.asSeconds() - previousTime.asSeconds())) << std::endl; // flooring it will make the frame rate a rounded number
-        previousTime = currentTime;
+        if (board.isWhiteTurn() == true ) {
+            board.makeMove(ai.getBestMove());
+            board.changeTurn();
+            getMoves();
+        }
     }
 }
 
@@ -151,8 +153,8 @@ void Game::draw()
 
     //Highlights king in red if in check
     if (inCheck) {
-        for (const auto piece : whiteTurn ? board.getWhitePieces() : board.getBlackPieces()) {
-            if (piece->getPieceType() == "King") {
+        for (const auto piece : board.isWhiteTurn() ? board.getWhitePieces() : board.getBlackPieces()) {
+            if (piece->getPieceType() == Piece::Type::King) {
                 drawRedSquare(piece->getX() * gSize, piece->getY() * gSize);
             }
         }
@@ -188,7 +190,7 @@ void Game::draw()
     }
 
     //draws the piece hints
-    const std::vector<Move> &playerMoves = whiteTurn ? whiteMoves : blackMoves;
+    const std::vector<Move> &playerMoves = board.isWhiteTurn() ? whiteMoves : blackMoves;
     if (heldPiece) {
         for (const auto &m : playerMoves) {
             if (m.getMovingPiece() == heldPiece) {
@@ -238,13 +240,13 @@ void Game::drawRedSquare(float x, float y)
 
 void Game::checkGameOver()
 {
-    const std::vector<Move> &playerMoves = whiteTurn ? whiteMoves : blackMoves;
+    const std::vector<Move> &playerMoves = board.isWhiteTurn() ? whiteMoves : blackMoves;
     if (playerMoves.empty()) {
         if (inCheck) {
-            std::cout << (whiteTurn ? "White" : "Black") << " is in checkmate";
+            std::cout << (board.isWhiteTurn() ? "White" : "Black") << " is in checkmate";
         }
         else {
-            std::cout << (whiteTurn ? "White" : "Black") << " is in stalemate";
+            std::cout << (board.isWhiteTurn() ? "White" : "Black") << " is in stalemate";
         }
         gameOver = true;
     }
@@ -253,8 +255,8 @@ void Game::checkGameOver()
 void Game::getMoves()
 {
     inCheck = false;
-    std::vector<Move> &playerMoves = whiteTurn ? whiteMoves : blackMoves;
-    const std::vector<const Piece *> &playerPieces = whiteTurn ? board.getWhitePieces() : board.getBlackPieces();
+    std::vector<Move> &playerMoves = board.isWhiteTurn() ? whiteMoves : blackMoves;
+    const std::vector<const Piece *> &playerPieces = board.isWhiteTurn() ? board.getWhitePieces() : board.getBlackPieces();
 
     //gets pseudo legal moves
     playerMoves.clear();
@@ -267,7 +269,7 @@ void Game::getMoves()
     const King* king = nullptr;
 
     for (const auto piece : playerPieces) {
-        if (piece->getPieceType() == "King") {
+        if (piece->getPieceType() == Piece::Type::King) {
             king = dynamic_cast<const King *>(piece);
         }
     }
@@ -287,18 +289,18 @@ void Game::getMoves()
 
     playerMoves.erase(it, playerMoves.end());
 
-    std::cout << "Possible moves for " << (whiteTurn ? "White" : "Black") << ":\n";
+    /*std::cout << "Possible moves for " << (board.isWhiteTurn() ? "White" : "Black") << ":\n";
 
 
     for (const Move &a : playerMoves) {
 
         std::cout << a.getMovingPiece()->getPieceType() << " from " << a.getOldX() << " " << 7 - a.getOldY() << " to " << a.getNewX() << " " << 7 - a.getNewY() << '\n';
     }
-    std::cout << "\n\n\n";
+    std::cout << "\n\n\n";*/
 
     //Checks if the current player is in check
-    for (const auto piece : whiteTurn ? board.getWhitePieces() : board.getBlackPieces()) {
-        if (piece->getPieceType() == "King" && dynamic_cast<const King *>(piece)->inCheck(board)) {
+    for (const auto piece : board.isWhiteTurn() ? board.getWhitePieces() : board.getBlackPieces()) {
+        if (piece->getPieceType() == Piece::Type::King && dynamic_cast<const King *>(piece)->inCheck(board)) {
             inCheck = true;
         }
     }
@@ -308,7 +310,7 @@ void Game::getMoves()
 
 bool Game::canMove(Move &m) const
 {
-    const std::vector<Move> &possibleMoves = whiteTurn ? whiteMoves : blackMoves;
+    const std::vector<Move> &possibleMoves = board.isWhiteTurn() ? whiteMoves : blackMoves;
 
     for (const Move &move : possibleMoves) {
         if (m == move) {
@@ -330,10 +332,28 @@ void Game::reset()
     heldPiece = nullptr;
     recentPiece = nullptr;
     inCheck = false;
-    whiteTurn = true;
+    board.setWhiteTurn(true);
     whiteMoves.clear();
     blackMoves.clear();
     playedMoves.clear();
     playedMoves.reserve(10);
     getMoves();
+}
+
+void Game::animateMoves(Node& node)
+{
+    board.makeMove(node.getValue());
+    board.changeTurn();
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    draw();
+    if (!node.getChildren().empty()) {
+        for (auto& a : node.getChildren()) {
+            animateMoves(a);
+        }
+    }
+    board.changeTurn();
+    board.unmakeMove(node.getValue());
+    std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    draw();
+
 }

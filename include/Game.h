@@ -1,7 +1,10 @@
 #pragma once
+#include "AiPlayer.h"
+
 #include <vector>
 #include "Board.h"
 #include "Move.h"
+#include "Node.h"
 #include "SFML/Graphics.hpp"
 
 class Game
@@ -18,6 +21,7 @@ private:
     void getMoves();
     bool canMove(Move &m) const;
     void reset();
+    void animateMoves(Node &node);
     unsigned int windowSize;
     sf::RenderWindow window;
     Board board;
@@ -29,9 +33,9 @@ private:
     const Piece* heldPiece;
     const Piece* recentPiece;
     bool inCheck;
-    bool whiteTurn;
     std::vector<Move> whiteMoves;
     std::vector<Move> blackMoves;
     std::vector<Move> playedMoves;
     bool gameOver;
+    AiPlayer ai;
 };

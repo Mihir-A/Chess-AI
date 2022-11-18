@@ -7,18 +7,9 @@ class Move;
 
 class Piece
 {
-protected:
-    Piece(bool white, int x, int y, const std::string &name);
-    sf::Texture texture;
-    bool hasMoved;
-    bool white;
-    int x;
-    int y;
-    bool dead;
-    static bool onBoard(int p);
-    const std::string tName;
 
 public:
+    enum class Type { Pawn, Rook, Queen, King, Bishop, Knight };
     virtual ~Piece() = default;
     int getX() const;
     int getY() const;
@@ -29,6 +20,17 @@ public:
     void setKill(bool killed);
     bool isWhite() const;
     const sf::Texture& getTexture() const;
-    const std::string& getPieceType() const;
+    Type getPieceType() const;
     virtual void getPossibleMoves(std::vector<Move> &moves, const Board &b) const = 0;
+
+protected:
+    Piece(bool white, int x, int y, Type pieceType);
+    sf::Texture texture;
+    bool hasMoved;
+    bool white;
+    int x;
+    int y;
+    bool dead;
+    static bool onBoard(int p);
+    Type pieceType;
 };

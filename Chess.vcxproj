@@ -159,6 +159,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="src\AiPlayer.cpp" />
     <ClCompile Include="src\Move.cpp" />
     <ClCompile Include="src\Pawn.cpp" />
     <ClCompile Include="src\Rook.cpp" />
@@ -172,9 +173,11 @@
     <ClCompile Include="src\main.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="include\AiPlayer.h" />
     <ClInclude Include="include\Bishop.h" />
     <ClInclude Include="include\Board.h" />
     <ClInclude Include="include\Game.h" />
+    <ClInclude Include="include\Node.h" />
     <ClInclude Include="include\Piece.h" />
     <ClInclude Include="include\King.h" />
     <ClInclude Include="include\Queen.h" />

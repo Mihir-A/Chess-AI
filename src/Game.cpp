@@ -120,7 +120,13 @@ void Game::play()
             board.makeMove(ai.getBestMove());
             board.changeTurn();
             getMoves();
+        }else {
+            board.makeMove(ai.getBestMove());
+            board.changeTurn();
+            getMoves();
+            
         }
+        //std::cout << ai.evaluatePos() << '\n';
     }
 }
 

@@ -12,15 +12,16 @@ Move AiPlayer::getBestMove()
     getMoves();
     std::vector<Move> playerMoves = board.isWhiteTurn() ? whiteMoves : blackMoves;
 
-    int bestEval = -negativeInfinity;
+    int bestEval = negativeInfinity;
     for (auto& move : playerMoves) {
         board.makeMove(move);
-        Node n(move);
-        int val = search(n, 6);
+        board.changeTurn();
+        int val = -search(3);
         if (val > bestEval) {
             bestEval = val;
             bestMove = move;
         }
+        board.changeTurn();
         board.unmakeMove(move);
     }
 
@@ -65,31 +66,30 @@ void AiPlayer::getMoves()
 }
 
 
-int AiPlayer::search(Node &node, int depth)
+int AiPlayer::search(int depth)
 {
-    if (depth == 0) {
-        int eval = evaluatePos();
-        return eval;
-    }
-
     getMoves();
-    const std::vector<Move>& playerMoves = board.isWhiteTurn() ? whiteMoves : blackMoves;
-    for (auto& m : playerMoves) {
-        node.addChild(m);
-    }
+    const std::vector<Move> playerMoves = board.isWhiteTurn() ? whiteMoves : blackMoves;
 
     if (playerMoves.empty()) {
-        return -negativeInfinity;
+        if (inCheck()) {
+            //prioritizes moves that checkmate fast
+            return negativeInfinity - depth;
+        }
+        return 1;
+    }
+
+    if (depth == 0) {
+        return evaluatePos();
     }
 
     int bestEval = negativeInfinity;
-
-    for (auto& child : node.getChildren()) {
-        board.makeMove(child.getValue());
+    for (auto& move : playerMoves) {
+        board.makeMove(move);
         board.changeTurn();
-        bestEval = std::max(bestEval, -search(child, depth - 1));
+        bestEval = std::max(bestEval, -search(depth - 1));
         board.changeTurn();
-        board.unmakeMove(child.getValue());
+        board.unmakeMove(move);
     }
     return bestEval;
 
@@ -146,7 +146,17 @@ int AiPlayer::evaluatePos() {
 
     //whiteEval += EvaluatePieceSquareTables(Board.WhiteIndex, blackEndgamePhaseWeight);
     //blackEval += EvaluatePieceSquareTables(Board.BlackIndex, whiteEndgamePhaseWeight);
+    int eval = (whiteEval - blackEval) ;
 
+    return eval * (board.isWhiteTurn() ? 1 : -1);
+}
 
-    return (whiteEval - blackEval) * (board.isWhiteTurn() ? 1 : -1);
+bool AiPlayer::inCheck()
+{
+    for (const auto piece : board.isWhiteTurn() ? board.getWhitePieces() : board.getBlackPieces()) {
+        if (piece->getPieceType() == Piece::Type::King && dynamic_cast<const King*>(piece)->inCheck(board)) {
+            return true;
+        }
+    }
+    return false;
 }

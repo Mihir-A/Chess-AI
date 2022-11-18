@@ -8,12 +8,14 @@ class AiPlayer
 public:
     explicit AiPlayer(Board& gameBoard);
     Move getBestMove();
-    
+    int evaluatePos();
+    bool inCheck();
+
 private:
     void getMoves();
-    int search(Node& node, int depth);
+    int search(int depth);
     int evaluatePieces(bool white) const;
-    int evaluatePos();
+    
     Board& board;
     std::vector<Move> whiteMoves;
     std::vector<Move> blackMoves;
@@ -25,7 +27,7 @@ private:
     const int bishopValue = 320;
     const int rookValue = 500;
     const int queenValue = 900;
-    const int negativeInfinity = std::numeric_limits<int>::min();
+    const int negativeInfinity = std::numeric_limits<int>::min() + 1000;
     const int positiveInfinity = std::numeric_limits<int>::max();
 
 };

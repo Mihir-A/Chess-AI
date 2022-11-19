@@ -12,6 +12,7 @@ class Game
 public:
     Game();
     void play();
+    void drawLoop();
 
 private:
     void draw();
@@ -38,4 +39,5 @@ private:
     std::vector<Move> playedMoves;
     bool gameOver;
     AiPlayer ai;
+    bool aiStarted;
 };

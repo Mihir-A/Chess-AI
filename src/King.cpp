@@ -32,7 +32,7 @@ void King::getPossibleMoves(std::vector<Move> &moves, const Board &b) const
     }
     //Right Side castle
     if (onBoard(x + 3)) {
-        const Piece* rook = b.getPiece(y, x + 3);
+        const Piece* rook = b.getPiece(x + 3, y);
         if (!hasMoved && rook && rook->getPieceType() == Type::Rook && !rook->getHasMoved()) {
             if (!b.getPiece(x + 1, y) && !b.getPiece(x + 2, y) && !inCheck(b)) {
                 bool castleCheck = false;

@@ -3,6 +3,8 @@
 #include "Node.h"
 #include <limits>
 
+class Game;
+
 class AiPlayer
 {
 public:
@@ -29,6 +31,5 @@ private:
     const int queenValue = 900;
     const int negativeInfinity = std::numeric_limits<int>::min() + 1000;
     const int positiveInfinity = std::numeric_limits<int>::max();
-
 };
 

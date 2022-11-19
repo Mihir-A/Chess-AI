@@ -7,20 +7,19 @@
 #include <future>
 #include <iostream>
 
-std::future<void> f;
-
 Game::Game()
     : windowSize(800)
-      , window(sf::VideoMode(windowSize, windowSize), "Chess", sf::Style::Titlebar + sf::Style::Close + sf::Style::Resize)
-      , brownSquare(sf::Vector2f(windowSize / 8.0f, windowSize / 8.0f))
-      , yellowSquare(sf::Vector2f(windowSize / 8.0f, windowSize / 8.0f))
-      , redSquare(sf::Vector2f(windowSize / 8.0f, windowSize / 8.0f))
-      , highlightSquare(sf::Vector2f(windowSize / 8.0f - 10, windowSize / 8.0f - 10))
-      , moveHint(15)
-      , heldPiece(nullptr)
-      , recentPiece(nullptr)
-      , gameOver(true)
-      , ai(board)
+    , window(sf::VideoMode(windowSize, windowSize), "Chess", sf::Style::Titlebar + sf::Style::Close + sf::Style::Resize)
+    , brownSquare(sf::Vector2f(windowSize / 8.0f, windowSize / 8.0f))
+    , yellowSquare(sf::Vector2f(windowSize / 8.0f, windowSize / 8.0f))
+    , redSquare(sf::Vector2f(windowSize / 8.0f, windowSize / 8.0f))
+    , highlightSquare(sf::Vector2f(windowSize / 8.0f - 10, windowSize / 8.0f - 10))
+    , moveHint(15)
+    , heldPiece(nullptr)
+    , recentPiece(nullptr)
+    , gameOver(true)
+    , ai(board)
+    , aiStarted(false)
 {
     brownSquare.setFillColor(sf::Color(181, 136, 99));// Tan color of the board
     yellowSquare.setFillColor(sf::Color(255, 255, 0, 130));// yellow color of the selected piece
@@ -46,23 +45,24 @@ void Game::play()
             }
             else if (event.type == sf::Event::MouseButtonPressed) {
                 // X and Y coordinates of the grid where the mouse is clicked
-                const unsigned int xCord = event.mouseButton.x / (windowSize / 8);
-                const unsigned int yCord = event.mouseButton.y / (windowSize / 8);
+                const int xCord = event.mouseButton.x / (windowSize / 8);
+                const int yCord = event.mouseButton.y / (windowSize / 8);
+                if (xCord < 8 && xCord > -1 && yCord < 8 && yCord > -1) {
+                    if (board.getPiece(xCord, yCord) && board.getPiece(xCord, yCord)->isWhite() == board.isWhiteTurn()) {
+                        //Finds piece that the mouse is over when it clicks
+                        heldPiece = board.getPiece(xCord, yCord);
+                    }
+                    else if (recentPiece != nullptr) {
+                        //This runs if a piece is already selected and wants to move to the space
+                        auto attemptedMove = Move(recentPiece, board.getPiece(xCord, yCord), recentPiece->getX(), recentPiece->getY(), xCord, yCord);
 
-                if (board.getPiece(xCord, yCord) != nullptr && board.getPiece(xCord, yCord)->isWhite() == board.isWhiteTurn()) {
-                    //Finds piece that the mouse is over when it clicks
-                    heldPiece = board.getPiece(xCord, yCord);
-                }
-                else if (recentPiece != nullptr) {
-                    //This runs if a piece is already selected and wants to move to the space
-                    auto attemptedMove = Move(recentPiece, board.getPiece(xCord, yCord), recentPiece->getX(), recentPiece->getY(), xCord, yCord);
-
-                    if (canMove(attemptedMove) && recentPiece->isWhite() == board.isWhiteTurn()) {
-                        board.makeMove(attemptedMove);
-                        playedMoves.push_back(attemptedMove);
-                        board.changeTurn();
-                        getMoves();
-                        recentPiece = nullptr;
+                        if (canMove(attemptedMove) && recentPiece->isWhite() == board.isWhiteTurn()) {
+                            board.makeMove(attemptedMove);
+                            playedMoves.push_back(attemptedMove);
+                            board.changeTurn();
+                            getMoves();
+                            recentPiece = nullptr;
+                        }
                     }
                 }
             }
@@ -99,6 +99,12 @@ void Game::play()
                     board.changeTurn();
                     getMoves();
                 }
+                if (!playedMoves.empty()) {
+                    board.unmakeMove(playedMoves[playedMoves.size() - 1]);
+                    playedMoves.pop_back();
+                    board.changeTurn();
+                    getMoves();
+                }
             }
             else if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::R && gameOver == true) {
                 reset();
@@ -114,19 +120,31 @@ void Game::play()
                     window.setSize(sf::Vector2u(windowSize, windowSize));
                 }
             }
+            else if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::A) {
+                aiStarted = !aiStarted;
+            }
         }
         draw();
-        if (board.isWhiteTurn() == true ) {
-            board.makeMove(ai.getBestMove());
+        if (board.isWhiteTurn() == false  && aiStarted) {
+            Move aiM = ai.getBestMove();
+            playedMoves.push_back(aiM);
+            board.makeMove(aiM);
             board.changeTurn();
             getMoves();
-        }else {
-            board.makeMove(ai.getBestMove());
-            board.changeTurn();
-            getMoves();
-            
         }
         //std::cout << ai.evaluatePos() << '\n';
+    }
+}
+
+void Game::drawLoop()
+{
+    draw();
+    sf::Event event;
+    while (window.pollEvent(event)) {
+        // Close window: exit
+        if (event.type == sf::Event::Closed) {
+            window.close();
+        }
     }
 }
 

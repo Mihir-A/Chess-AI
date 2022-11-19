@@ -22,6 +22,7 @@ public:
     const sf::Texture& getTexture() const;
     Type getPieceType() const;
     virtual void getPossibleMoves(std::vector<Move> &moves, const Board &b) const = 0;
+    static bool onBoard(int p);
 
 protected:
     Piece(bool white, int x, int y, Type pieceType);
@@ -31,6 +32,6 @@ protected:
     int x;
     int y;
     bool dead;
-    static bool onBoard(int p);
+    
     Type pieceType;
 };

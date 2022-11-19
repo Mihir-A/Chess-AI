@@ -10,7 +10,7 @@ Move AiPlayer::getBestMove()
     Move bestMove;
 
     getMoves();
-    std::vector<Move> playerMoves = board.isWhiteTurn() ? whiteMoves : blackMoves;
+    const std::vector<Move> playerMoves = board.isWhiteTurn() ? whiteMoves : blackMoves;
 
     int bestEval = negativeInfinity;
     for (auto& move : playerMoves) {
@@ -40,6 +40,7 @@ void AiPlayer::getMoves()
             piece->getPossibleMoves(playerMoves, board);
         }
     }
+    
 
     const King* king = nullptr;
 
@@ -48,10 +49,12 @@ void AiPlayer::getMoves()
             king = dynamic_cast<const King*>(piece);
         }
     }
+    int otherC = 0;
+    
 
     //This lambda plays all possible moves and then checks if they cause the king to be in check
     //These moves are removed from the list
-    const auto it = std::remove_if(playerMoves.begin(), playerMoves.end(), [this, &king](const Move& m)
+    const auto it = std::remove_if(playerMoves.begin(), playerMoves.end(), [this, &king, &otherC](const Move& m)
         {
             board.makeMove(m);
             if (king->inCheck(board)) {

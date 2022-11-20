@@ -10,12 +10,14 @@ class AiPlayer
 public:
     explicit AiPlayer(Board& gameBoard);
     Move getBestMove();
-    int evaluatePos();
-    bool inCheck();
+    int evaluatePos() const;
+    bool inCheck() const;
 
 private:
     void getMoves();
     int search(int depth, bool isMaximisingPlayer, int alpha, int beta);
+    void orderMoves(std::vector<Move> &moves) const;
+    static int evaluatePiece(const Piece* piece);
     int evaluatePieces(bool white) const;
     
     Board& board;
@@ -24,12 +26,13 @@ private:
 
     //Values for best move checks
 
-    const int pawnValue = 100;
-    const int knightValue = 300;
-    const int bishopValue = 320;
-    const int rookValue = 500;
-    const int queenValue = 900;
-    const int negativeInfinity = std::numeric_limits<int>::min();
-    const int positiveInfinity = std::numeric_limits<int>::max();
+    static constexpr int pawnValue = 100;
+    static constexpr int knightValue = 300;
+    static constexpr int bishopValue = 320;
+    static constexpr int rookValue = 500;
+    static constexpr int queenValue = 900;
+    static constexpr int negativeInfinity = std::numeric_limits<int>::min();
+    static constexpr int positiveInfinity = std::numeric_limits<int>::max();
+    static constexpr int capturedPieceValueMultiplier = 10;
 };
 

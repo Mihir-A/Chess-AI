@@ -7,7 +7,9 @@ AiPlayer::AiPlayer(Board& gameBoard)
     : board(gameBoard)
 {}
 
-constexpr int searchDepth = 4;
+constexpr int searchDepth = 5;
+int searched = 0;
+int prunned = 0;
 
 Move AiPlayer::getBestMove()
 {
@@ -44,54 +46,20 @@ Move AiPlayer::getBestMove()
         }
     }
 
+    std::cout << "Searched Moves: " << searched << '\n';
+    std::cout << "Prunned Moves: " << prunned << '\n';
+    prunned = 0;
+    searched = 0;
+
     return bestMoveFound;
 }
 
-void AiPlayer::getMoves()
-{
-    std::vector<Move>& playerMoves = board.isWhiteTurn() ? whiteMoves : blackMoves;
-    const std::vector<const Piece*>& playerPieces = board.isWhiteTurn() ? board.getWhitePieces() : board.getBlackPieces();
-
-    //gets pseudo legal moves
-    playerMoves.clear();
-    for (const auto piece : playerPieces) {
-        if (!piece->isDead()) {
-            piece->getPossibleMoves(playerMoves, board);
-        }
-    }
-    
-
-    const King* king = nullptr;
-
-    for (const auto piece : playerPieces) {
-        if (piece->getPieceType() == Piece::Type::King) {
-            king = dynamic_cast<const King*>(piece);
-        }
-    }
-    int otherC = 0;
-    
-
-    //This lambda plays all possible moves and then checks if they cause the king to be in check
-    //These moves are removed from the list
-    const auto it = std::remove_if(playerMoves.begin(), playerMoves.end(), [this, &king, &otherC](const Move& m)
-        {
-            board.makeMove(m);
-            if (king->inCheck(board)) {
-                board.unmakeMove(m);
-                return true;
-            }
-            board.unmakeMove(m);
-            return false;
-        });
-
-    playerMoves.erase(it, playerMoves.end());
-}
-
-
 int AiPlayer::search(int depth, bool isMaximisingPlayer, int alpha, int beta)
 {
+    searched++;
     getMoves();
     std::vector<Move> playerMoves = board.isWhiteTurn() ? whiteMoves : blackMoves;
+    orderMoves(playerMoves);
 
     if (playerMoves.empty()) {
         if (inCheck()) {
@@ -114,6 +82,7 @@ int AiPlayer::search(int depth, bool isMaximisingPlayer, int alpha, int beta)
             board.changeTurn();
             alpha = std::max(alpha, bestMove);
             if (beta <= alpha) {
+                prunned++;
                 return bestMove;
             }
         }
@@ -129,6 +98,7 @@ int AiPlayer::search(int depth, bool isMaximisingPlayer, int alpha, int beta)
             board.changeTurn();
             beta = std::min(beta, bestMove);
             if (beta <= alpha) {
+                prunned++;
                 return bestMove;
             }
 
@@ -137,39 +107,60 @@ int AiPlayer::search(int depth, bool isMaximisingPlayer, int alpha, int beta)
     }
 }
 
+void AiPlayer::orderMoves(std::vector<Move>& moves) const
+{
+    for (auto& m : moves) {
+        if (m.getTargetedPiece()) {
+            m.moveValue = capturedPieceValueMultiplier * evaluatePiece(m.getTargetedPiece()) - evaluatePiece(m.getMovingPiece());
+        }
+        //This will make the sorting order correct and eval moves in best to worst order
+        //Checking best to worst maximizes pruning
+        m.moveValue *= -1; 
+
+    }
+    std::sort(moves.begin(), moves.end());
+}
+
+int AiPlayer::evaluatePiece(const Piece* piece)
+{
+    int value = 0;
+    switch (piece->getPieceType()) {
+    case Piece::Type::King:
+        value += 0;
+        break;
+    case Piece::Type::Queen:
+        value += queenValue;
+        break;
+    case Piece::Type::Rook:
+        value += rookValue;
+        break;
+    case Piece::Type::Bishop:
+        value += bishopValue;
+        break;
+    case Piece::Type::Knight:
+        value += knightValue;
+        break;
+    case Piece::Type::Pawn:
+        value += pawnValue;
+        break;
+    }
+    return value;
+}
+
 int AiPlayer::evaluatePieces(bool white) const
 {
     int value = 0;
     const std::vector<const Piece*>& pieces = white ? board.getWhitePieces() : board.getBlackPieces();
     for (const auto piece : pieces) {
         if (!piece->isDead()) {
-            switch (piece->getPieceType()) {
-
-            case Piece::Type::King:
-                value += 0;
-                break;
-            case Piece::Type::Queen:
-                value += queenValue;
-                break;
-            case Piece::Type::Rook:
-                value += rookValue;
-                break;
-            case Piece::Type::Bishop:
-                value += bishopValue;
-                break;
-            case Piece::Type::Knight:
-                value += knightValue;
-                break;
-            case Piece::Type::Pawn:
-                value += pawnValue;
-                break;
-            }
+            value += evaluatePiece(piece);
         }
     }
     return value;
 }
 
-int AiPlayer::evaluatePos() {
+int AiPlayer::evaluatePos() const
+{
     int whiteEval = 0;
     int blackEval = 0;
 
@@ -193,7 +184,7 @@ int AiPlayer::evaluatePos() {
     return eval;
 }
 
-bool AiPlayer::inCheck()
+bool AiPlayer::inCheck() const
 {
     for (const auto piece : board.isWhiteTurn() ? board.getWhitePieces() : board.getBlackPieces()) {
         if (piece->getPieceType() == Piece::Type::King && dynamic_cast<const King*>(piece)->inCheck(board)) {
@@ -201,4 +192,43 @@ bool AiPlayer::inCheck()
         }
     }
     return false;
+}
+
+void AiPlayer::getMoves()
+{
+    std::vector<Move>& playerMoves = board.isWhiteTurn() ? whiteMoves : blackMoves;
+    const std::vector<const Piece*>& playerPieces = board.isWhiteTurn() ? board.getWhitePieces() : board.getBlackPieces();
+
+    //gets pseudo legal moves
+    playerMoves.clear();
+    for (const auto piece : playerPieces) {
+        if (!piece->isDead()) {
+            piece->getPossibleMoves(playerMoves, board);
+        }
+    }
+
+
+    const King* king = nullptr;
+
+    for (const auto piece : playerPieces) {
+        if (piece->getPieceType() == Piece::Type::King) {
+            king = dynamic_cast<const King*>(piece);
+        }
+    }
+
+
+    //This lambda plays all possible moves and then checks if they cause the king to be in check
+    //These moves are removed from the list
+    const auto it = std::remove_if(playerMoves.begin(), playerMoves.end(), [this, &king](const Move& m)
+        {
+            board.makeMove(m);
+    if (king->inCheck(board)) {
+        board.unmakeMove(m);
+        return true;
+    }
+    board.unmakeMove(m);
+    return false;
+        });
+
+    playerMoves.erase(it, playerMoves.end());
 }

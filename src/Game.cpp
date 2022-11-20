@@ -125,14 +125,14 @@ void Game::play()
                 aiStarted = !aiStarted;
             }
         }
-        draw();
+        /*draw();
         if (board.isWhiteTurn() == true && aiStarted && !gameOver) {
             Move aiM = ai.getBestMove();
             playedMoves.push_back(aiM);
             board.makeMove(aiM);
             board.changeTurn();
             getMoves();
-        }
+        }*/
         draw();
         if (board.isWhiteTurn() == false && aiStarted && !gameOver) {
             Move aiM = ai.getBestMove();

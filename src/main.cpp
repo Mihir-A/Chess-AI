@@ -1,11 +1,11 @@
 #include "Game.h"
 
-#ifdef WINNOCONSOLE
-#include <Windows.h>
-int wWinMain(HINSTANCE hInst, HINSTANCE hPreInst, LPWSTR nCmdLine, int nCmdShow)
-#else
+//#ifdef WINNOCONSOLE
+//#include <Windows.h>
+//int wWinMain(HINSTANCE hInst, HINSTANCE hPreInst, LPWSTR nCmdLine, int nCmdShow)
+//#else
 int main()
-#endif
+//#endif
 
 {
     auto game = Game();

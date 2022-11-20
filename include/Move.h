@@ -20,9 +20,16 @@ public:
     bool operator==(const Move &other) const;
     MoveType getMoveType() const;
     void setMoveType(MoveType moveType);
+    int moveValue;// For ai
+    friend bool operator<(const Move& lhs, const Move& rhs)
+    {
+        return lhs.moveValue < rhs.moveValue;
+    }
+
 private:
     const Piece *movingPiece, *targetedPiece;
     int oldX, oldY, newX, newY;
+    
     bool firstMoveMoving, firstMoveTargeted;
     MoveType moveType;
 };

@@ -8,6 +8,7 @@
 #include "Move.h"
 //"k7/8/8/8/8/8/P7/R3K1NR w KQkq - 0 1"
 //"rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1"
+//"r3k2r/p1ppqpb/bn2pnp/3PN3/1p2P3/2N2Q1p/PPPBBPPP/R3K2R w KQkq - 0 1"
 Board::Board() : Board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
 {}
 

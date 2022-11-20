@@ -2,6 +2,8 @@
 #include "Move.h"
 #include "Board.h"
 
+#include <iostream>
+
 King::King(bool white, int x, int y)
     : Piece(white, x, y, Type::King)
 {
@@ -17,6 +19,9 @@ King::King(bool white, int x, int y)
 void King::getPossibleMoves(std::vector<Move> &moves, const Board &b) const
 {
     constexpr int offsets[3] = {-1, 0, 1};
+    static int times = 0;
+    times++;
+    //std::cout << times++ << '\n';
 
     for (const int xOffset : offsets) {
         for (const int yOffset : offsets) {

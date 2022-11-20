@@ -1,31 +1,50 @@
 #include "AiPlayer.h"
 #include "King.h"
 
+#include <iostream>
+
 AiPlayer::AiPlayer(Board& gameBoard)
     : board(gameBoard)
 {}
 
+constexpr int searchDepth = 4;
+
 Move AiPlayer::getBestMove()
 {
-    Move bestMove;
-
     getMoves();
-    const std::vector<Move> playerMoves = board.isWhiteTurn() ? whiteMoves : blackMoves;
+    std::vector<Move> playerMoves = board.isWhiteTurn() ? whiteMoves : blackMoves;
+    int bestMove;
+    Move bestMoveFound;
 
-    int bestEval = negativeInfinity;
-    for (auto& move : playerMoves) {
-        board.makeMove(move);
-        board.changeTurn();
-        int val = -search(3);
-        if (val > bestEval) {
-            bestEval = val;
-            bestMove = move;
+    if (!board.isWhiteTurn()) {
+        bestMove = negativeInfinity;
+        for (Move& move : playerMoves) {
+            board.makeMove(move);
+            board.changeTurn();
+            int value = search(searchDepth, false, negativeInfinity, positiveInfinity);
+            board.unmakeMove(move);
+            board.changeTurn();
+            if (value >= bestMove) {
+                bestMove = value;
+                bestMoveFound = move;
+            }
         }
-        board.changeTurn();
-        board.unmakeMove(move);
+    }else {
+        bestMove = positiveInfinity;
+        for (Move& move : playerMoves) {
+            board.makeMove(move);
+            board.changeTurn();
+            int value = search(searchDepth, true, negativeInfinity, positiveInfinity);
+            board.unmakeMove(move);
+            board.changeTurn();
+            if (value <= bestMove) {
+                bestMove = value;
+                bestMoveFound = move;
+            }
+        }
     }
 
-    return bestMove;
+    return bestMoveFound;
 }
 
 void AiPlayer::getMoves()
@@ -69,33 +88,53 @@ void AiPlayer::getMoves()
 }
 
 
-int AiPlayer::search(int depth)
+int AiPlayer::search(int depth, bool isMaximisingPlayer, int alpha, int beta)
 {
     getMoves();
-    const std::vector<Move> playerMoves = board.isWhiteTurn() ? whiteMoves : blackMoves;
+    std::vector<Move> playerMoves = board.isWhiteTurn() ? whiteMoves : blackMoves;
 
     if (playerMoves.empty()) {
         if (inCheck()) {
-            //prioritizes moves that checkmate fast
-            return negativeInfinity - depth;
+            return (isMaximisingPlayer ? (negativeInfinity + 1000 - depth) : (positiveInfinity - 1000 + depth));
         }
-        return 1;
+        return 0;
     }
 
     if (depth == 0) {
-        return evaluatePos();
+        return -evaluatePos();
     }
 
-    int bestEval = negativeInfinity;
-    for (auto& move : playerMoves) {
-        board.makeMove(move);
-        board.changeTurn();
-        bestEval = std::max(bestEval, -search(depth - 1));
-        board.changeTurn();
-        board.unmakeMove(move);
+    if (isMaximisingPlayer) {
+        int bestMove = negativeInfinity;
+        for (Move& move : playerMoves) {
+            board.makeMove(move);
+            board.changeTurn();
+            bestMove = std::max(bestMove, search(depth - 1, !isMaximisingPlayer, alpha, beta));
+            board.unmakeMove(move);
+            board.changeTurn();
+            alpha = std::max(alpha, bestMove);
+            if (beta <= alpha) {
+                return bestMove;
+            }
+        }
+        return bestMove;
     }
-    return bestEval;
+    else {
+        int bestMove = positiveInfinity;
+        for (Move& move : playerMoves) {
+            board.makeMove(move);
+            board.changeTurn();
+            bestMove = std::min(bestMove, search(depth - 1, !isMaximisingPlayer, alpha, beta));
+            board.unmakeMove(move);
+            board.changeTurn();
+            beta = std::min(beta, bestMove);
+            if (beta <= alpha) {
+                return bestMove;
+            }
 
+        }
+        return bestMove;
+    }
 }
 
 int AiPlayer::evaluatePieces(bool white) const
@@ -151,7 +190,7 @@ int AiPlayer::evaluatePos() {
     //blackEval += EvaluatePieceSquareTables(Board.BlackIndex, whiteEndgamePhaseWeight);
     int eval = (whiteEval - blackEval) ;
 
-    return eval * (board.isWhiteTurn() ? 1 : -1);
+    return eval;
 }
 
 bool AiPlayer::inCheck()

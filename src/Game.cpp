@@ -17,7 +17,7 @@ Game::Game()
     , moveHint(15)
     , heldPiece(nullptr)
     , recentPiece(nullptr)
-    , gameOver(true)
+    , gameOver(false)
     , ai(board)
     , aiStarted(false)
 {
@@ -105,8 +105,9 @@ void Game::play()
                     board.changeTurn();
                     getMoves();
                 }
+                gameOver = false;
             }
-            else if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::R && gameOver == true) {
+            else if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::R) {
                 reset();
             }
             else if (event.type == sf::Event::Resized) {
@@ -125,7 +126,15 @@ void Game::play()
             }
         }
         draw();
-        if (board.isWhiteTurn() == false  && aiStarted) {
+        if (board.isWhiteTurn() == true && aiStarted && !gameOver) {
+            Move aiM = ai.getBestMove();
+            playedMoves.push_back(aiM);
+            board.makeMove(aiM);
+            board.changeTurn();
+            getMoves();
+        }
+        draw();
+        if (board.isWhiteTurn() == false && aiStarted && !gameOver) {
             Move aiM = ai.getBestMove();
             playedMoves.push_back(aiM);
             board.makeMove(aiM);

@@ -3,11 +3,11 @@
 
 #include <iostream>
 
-AiPlayer::AiPlayer(Board& gameBoard)
+AiPlayer::AiPlayer(Board &gameBoard)
     : board(gameBoard)
 {}
 
-constexpr int searchDepth = 5;
+constexpr int searchDepth = 4;
 int searched = 0;
 int prunned = 0;
 
@@ -20,7 +20,7 @@ Move AiPlayer::getBestMove()
 
     if (!board.isWhiteTurn()) {
         bestMove = negativeInfinity;
-        for (Move& move : playerMoves) {
+        for (Move &move : playerMoves) {
             board.makeMove(move);
             board.changeTurn();
             int value = search(searchDepth, false, negativeInfinity, positiveInfinity);
@@ -31,9 +31,10 @@ Move AiPlayer::getBestMove()
                 bestMoveFound = move;
             }
         }
-    }else {
+    }
+    else {
         bestMove = positiveInfinity;
-        for (Move& move : playerMoves) {
+        for (Move &move : playerMoves) {
             board.makeMove(move);
             board.changeTurn();
             int value = search(searchDepth, true, negativeInfinity, positiveInfinity);
@@ -74,7 +75,7 @@ int AiPlayer::search(int depth, bool isMaximisingPlayer, int alpha, int beta)
 
     if (isMaximisingPlayer) {
         int bestMove = negativeInfinity;
-        for (Move& move : playerMoves) {
+        for (Move &move : playerMoves) {
             board.makeMove(move);
             board.changeTurn();
             bestMove = std::max(bestMove, search(depth - 1, !isMaximisingPlayer, alpha, beta));
@@ -88,34 +89,32 @@ int AiPlayer::search(int depth, bool isMaximisingPlayer, int alpha, int beta)
         }
         return bestMove;
     }
-    else {
-        int bestMove = positiveInfinity;
-        for (Move& move : playerMoves) {
-            board.makeMove(move);
-            board.changeTurn();
-            bestMove = std::min(bestMove, search(depth - 1, !isMaximisingPlayer, alpha, beta));
-            board.unmakeMove(move);
-            board.changeTurn();
-            beta = std::min(beta, bestMove);
-            if (beta <= alpha) {
-                prunned++;
-                return bestMove;
-            }
-
+    int bestMove = positiveInfinity;
+    for (Move &move : playerMoves) {
+        board.makeMove(move);
+        board.changeTurn();
+        bestMove = std::min(bestMove, search(depth - 1, !isMaximisingPlayer, alpha, beta));
+        board.unmakeMove(move);
+        board.changeTurn();
+        beta = std::min(beta, bestMove);
+        if (beta <= alpha) {
+            prunned++;
+            return bestMove;
         }
-        return bestMove;
+
     }
+    return bestMove;
 }
 
-void AiPlayer::orderMoves(std::vector<Move>& moves) const
+void AiPlayer::orderMoves(std::vector<Move> &moves) const
 {
-    for (auto& m : moves) {
+    for (auto &m : moves) {
         if (m.getTargetedPiece()) {
             m.moveValue = capturedPieceValueMultiplier * evaluatePiece(m.getTargetedPiece()) - evaluatePiece(m.getMovingPiece());
         }
         //This will make the sorting order correct and eval moves in best to worst order
         //Checking best to worst maximizes pruning
-        m.moveValue *= -1; 
+        m.moveValue *= -1;
 
     }
     std::sort(moves.begin(), moves.end());
@@ -150,7 +149,7 @@ int AiPlayer::evaluatePiece(const Piece* piece)
 int AiPlayer::evaluatePieces(bool white) const
 {
     int value = 0;
-    const std::vector<const Piece*>& pieces = white ? board.getWhitePieces() : board.getBlackPieces();
+    const std::vector<const Piece *> &pieces = white ? board.getWhitePieces() : board.getBlackPieces();
     for (const auto piece : pieces) {
         if (!piece->isDead()) {
             value += evaluatePiece(piece);
@@ -167,27 +166,70 @@ int AiPlayer::evaluatePos() const
     int whiteMaterial = evaluatePieces(true);
     int blackMaterial = evaluatePieces(false);
 
-   // int whiteMaterialWithoutPawns = whiteMaterial - board.pawns[Board.WhiteIndex].Count * pawnValue;
-   // int blackMaterialWithoutPawns = blackMaterial - board.pawns[Board.BlackIndex].Count * pawnValue;
-   // float whiteEndgamePhaseWeight = EndgamePhaseWeight(whiteMaterialWithoutPawns);
-   // float blackEndgamePhaseWeight = EndgamePhaseWeight(blackMaterialWithoutPawns);
+    // int whiteMaterialWithoutPawns = whiteMaterial - board.pawns[Board.WhiteIndex].Count * pawnValue;
+    // int blackMaterialWithoutPawns = blackMaterial - board.pawns[Board.BlackIndex].Count * pawnValue;
+    // float whiteEndgamePhaseWeight = EndgamePhaseWeight(whiteMaterialWithoutPawns);
+    // float blackEndgamePhaseWeight = EndgamePhaseWeight(blackMaterialWithoutPawns);
 
     whiteEval += whiteMaterial;
     blackEval += blackMaterial;
     //whiteEval += MopUpEval(Board.WhiteIndex, Board.BlackIndex, whiteMaterial, blackMaterial, blackEndgamePhaseWeight);
     //blackEval += MopUpEval(Board.BlackIndex, Board.WhiteIndex, blackMaterial, whiteMaterial, whiteEndgamePhaseWeight);
 
-    //whiteEval += EvaluatePieceSquareTables(Board.WhiteIndex, blackEndgamePhaseWeight);
-    //blackEval += EvaluatePieceSquareTables(Board.BlackIndex, whiteEndgamePhaseWeight);
-    int eval = (whiteEval - blackEval) ;
+    whiteEval += evaluatePieceTables(true);
+    blackEval += evaluatePieceTables(false);
+    int eval = (whiteEval - blackEval);
 
     return eval;
+}
+
+int AiPlayer::evaluatePieceTables(bool white) const
+{
+    int value = 0;
+    const std::vector<const Piece*>& pieces = white ? board.getWhitePieces() : board.getBlackPieces();
+    for (const auto piece : pieces) {
+        if (!piece->isDead()) {
+            value += evaluatePiecePos(piece);
+        }
+    }
+    return value;
+}
+
+int AiPlayer::evaluatePiecePos(const Piece* piece) const
+{
+    int index;
+
+    if(!piece->isWhite()) {
+        index = piece->getX() + (7 - piece->getY()) * 8;
+    }else {
+        index = piece->getX() + piece->getY() * 8;
+    }
+
+    switch (piece->getPieceType()) {
+    case Piece::Type::King:
+        if (evaluatePieces(!piece->isWhite()) >= 2 * rookValue + 2 * bishopValue + 3 * pawnValue) {
+            return kingMiddlePosValues[index];
+        }
+        return kingEndPosValues[index];
+    case Piece::Type::Queen:
+        return queenPosValues[index];
+    case Piece::Type::Rook:
+        return rookPosValues[index];
+    case Piece::Type::Bishop:
+        return bishopPosValues[index];
+    case Piece::Type::Knight:
+        return knightPosValues[index];
+    case Piece::Type::Pawn:
+        return pawnPosValues[index];
+    }
+    std::cout << "something went wrong";
+    return 0;
 }
 
 bool AiPlayer::inCheck() const
 {
     for (const auto piece : board.isWhiteTurn() ? board.getWhitePieces() : board.getBlackPieces()) {
-        if (piece->getPieceType() == Piece::Type::King && dynamic_cast<const King*>(piece)->inCheck(board)) {
+        if (piece->getPieceType() == Piece::Type::King && dynamic_cast<const King *>(piece)->inCheck(board)) {
             return true;
         }
     }
@@ -196,8 +238,8 @@ bool AiPlayer::inCheck() const
 
 void AiPlayer::getMoves()
 {
-    std::vector<Move>& playerMoves = board.isWhiteTurn() ? whiteMoves : blackMoves;
-    const std::vector<const Piece*>& playerPieces = board.isWhiteTurn() ? board.getWhitePieces() : board.getBlackPieces();
+    std::vector<Move> &playerMoves = board.isWhiteTurn() ? whiteMoves : blackMoves;
+    const std::vector<const Piece *> &playerPieces = board.isWhiteTurn() ? board.getWhitePieces() : board.getBlackPieces();
 
     //gets pseudo legal moves
     playerMoves.clear();
@@ -212,23 +254,23 @@ void AiPlayer::getMoves()
 
     for (const auto piece : playerPieces) {
         if (piece->getPieceType() == Piece::Type::King) {
-            king = dynamic_cast<const King*>(piece);
+            king = dynamic_cast<const King *>(piece);
         }
     }
 
 
     //This lambda plays all possible moves and then checks if they cause the king to be in check
     //These moves are removed from the list
-    const auto it = std::remove_if(playerMoves.begin(), playerMoves.end(), [this, &king](const Move& m)
-        {
-            board.makeMove(m);
-    if (king->inCheck(board)) {
+    const auto it = std::remove_if(playerMoves.begin(), playerMoves.end(), [this, &king](const Move &m)
+    {
+        board.makeMove(m);
+        if (king->inCheck(board)) {
+            board.unmakeMove(m);
+            return true;
+        }
         board.unmakeMove(m);
-        return true;
-    }
-    board.unmakeMove(m);
-    return false;
-        });
+        return false;
+    });
 
     playerMoves.erase(it, playerMoves.end());
 }

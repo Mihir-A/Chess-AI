@@ -9,17 +9,17 @@
 
 Game::Game()
     : windowSize(800)
-    , window(sf::VideoMode(windowSize, windowSize), "Chess", sf::Style::Titlebar + sf::Style::Close + sf::Style::Resize)
-    , brownSquare(sf::Vector2f(windowSize / 8.0f, windowSize / 8.0f))
-    , yellowSquare(sf::Vector2f(windowSize / 8.0f, windowSize / 8.0f))
-    , redSquare(sf::Vector2f(windowSize / 8.0f, windowSize / 8.0f))
-    , highlightSquare(sf::Vector2f(windowSize / 8.0f - 10, windowSize / 8.0f - 10))
-    , moveHint(15)
-    , heldPiece(nullptr)
-    , recentPiece(nullptr)
-    , gameOver(false)
-    , ai(board)
-    , aiStarted(false)
+      , window(sf::VideoMode(windowSize, windowSize), "Chess", sf::Style::Titlebar + sf::Style::Close + sf::Style::Resize)
+      , brownSquare(sf::Vector2f(windowSize / 8.0f, windowSize / 8.0f))
+      , yellowSquare(sf::Vector2f(windowSize / 8.0f, windowSize / 8.0f))
+      , redSquare(sf::Vector2f(windowSize / 8.0f, windowSize / 8.0f))
+      , highlightSquare(sf::Vector2f(windowSize / 8.0f - 10, windowSize / 8.0f - 10))
+      , moveHint(15)
+      , heldPiece(nullptr)
+      , recentPiece(nullptr)
+      , gameOver(false)
+      , ai(board)
+      , aiStarted(false)
 {
     brownSquare.setFillColor(sf::Color(181, 136, 99));// Tan color of the board
     yellowSquare.setFillColor(sf::Color(255, 255, 0, 130));// yellow color of the selected piece
@@ -32,6 +32,15 @@ Game::Game()
     playedMoves.reserve(10);
     getMoves();
     window.setVerticalSyncEnabled(true);
+}
+
+void Game::aiTurn()
+{
+    Move aiM = ai.getBestMove();
+    playedMoves.push_back(aiM);
+    board.makeMove(aiM);
+    board.changeTurn();
+    getMoves();
 }
 
 void Game::play()
@@ -125,22 +134,16 @@ void Game::play()
                 aiStarted = !aiStarted;
             }
         }
-        /*draw();
-        if (board.isWhiteTurn() == true && aiStarted && !gameOver) {
-            Move aiM = ai.getBestMove();
-            playedMoves.push_back(aiM);
-            board.makeMove(aiM);
-            board.changeTurn();
-            getMoves();
-        }*/
         draw();
         if (board.isWhiteTurn() == false && aiStarted && !gameOver) {
-            Move aiM = ai.getBestMove();
-            playedMoves.push_back(aiM);
-            board.makeMove(aiM);
-            board.changeTurn();
-            getMoves();
+            auto f = std::async(std::launch::async, &Game::aiTurn, this);
+            basicWindowM(f);
         }
+        /*draw();
+        if (board.isWhiteTurn() == false && aiStarted && !gameOver) {
+            auto f = std::async(std::launch::async, &Game::aiTurn, this);
+            basicWindowM(f);
+        }*/
         //std::cout << ai.evaluatePos() << '\n';
     }
 }
@@ -373,20 +376,27 @@ void Game::reset()
     getMoves();
 }
 
-void Game::animateMoves(Node& node)
+void Game::basicWindowM(std::future<void>& f)
 {
-    board.makeMove(node.getValue());
-    board.changeTurn();
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    draw();
-    if (!node.getChildren().empty()) {
-        for (auto& a : node.getChildren()) {
-            animateMoves(a);
+    //This keeps the window responding while ai is searching for moves
+    while(f.wait_for(std::chrono::seconds(0)) != std::future_status::ready) {
+        sf::Event event;
+        while (window.pollEvent(event)) {
+            // Close window: exit
+            if (event.type == sf::Event::Closed) {
+                window.close();
+            }
+            else if (event.type == sf::Event::Resized) {
+                // Makes sure the window is always a square
+                if (window.getSize().x != windowSize) {
+                    windowSize = window.getSize().x;
+                    window.setSize(sf::Vector2u(windowSize, windowSize));
+                }
+                else if (window.getSize().y != windowSize) {
+                    windowSize = window.getSize().y;
+                    window.setSize(sf::Vector2u(windowSize, windowSize));
+                }
+            }
         }
     }
-    board.changeTurn();
-    board.unmakeMove(node.getValue());
-    std::this_thread::sleep_for(std::chrono::milliseconds(100));
-    draw();
-
 }

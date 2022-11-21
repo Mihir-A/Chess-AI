@@ -7,10 +7,13 @@
 #include "Node.h"
 #include "SFML/Graphics.hpp"
 
+#include <future>
+
 class Game
 {
 public:
     Game();
+    void aiTurn();
     void play();
     void drawLoop();
 
@@ -22,7 +25,7 @@ private:
     void getMoves();
     bool canMove(Move &m) const;
     void reset();
-    void animateMoves(Node &node);
+    void basicWindowM(std::future<void>& f);
     unsigned int windowSize;
     sf::RenderWindow window;
     Board board;

@@ -7,9 +7,9 @@ class Move;
 
 class Piece
 {
-
 public:
     enum class Type { Pawn, Rook, Queen, King, Bishop, Knight };
+
     virtual ~Piece() = default;
     int getX() const;
     int getY() const;
@@ -32,6 +32,6 @@ protected:
     int x;
     int y;
     bool dead;
-    
+
     Type pieceType;
 };

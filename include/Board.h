@@ -22,8 +22,8 @@ public:
 private:
     void decipherFenBoard(std::string::const_iterator &it);
     void movePiece(Piece* p, int x, int y);
-    std::array<std::array<Piece*, 8>, 8> b{};
-    std::vector<const Piece*> whitePieces;
-    std::vector<const Piece*> blackPieces;
+    std::array<std::array<Piece *, 8>, 8> b{};
+    std::vector<const Piece *> whitePieces;
+    std::vector<const Piece *> blackPieces;
     bool whiteTurn;
 };

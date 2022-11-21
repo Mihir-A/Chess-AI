@@ -1,7 +1,7 @@
 #include "Move.h"
 
 Move::Move()
-    :Move(nullptr, nullptr, -1, -1, -1, -1, MoveType::Undefined)
+    : Move(nullptr, nullptr, -1, -1, -1, -1, MoveType::Undefined)
 {}
 
 Move::Move(const Piece* movingPiece, const Piece* targetedPiece, int oldX, int oldY, int newX, int newY)
@@ -9,7 +9,8 @@ Move::Move(const Piece* movingPiece, const Piece* targetedPiece, int oldX, int o
 {}
 
 Move::Move(const Piece* movingPiece, const Piece* targetedPiece, int oldX, int oldY, int newX, int newY, MoveType moveType)
-    : moveValue(0), movingPiece(movingPiece), targetedPiece(targetedPiece), oldX(oldX), oldY(oldY), newX(newX), newY(newY), firstMoveMoving(false), firstMoveTargeted(false), moveType(moveType)
+    : moveValue(0), movingPiece(movingPiece), targetedPiece(targetedPiece), oldX(oldX), oldY(oldY), newX(newX), newY(newY), firstMoveMoving(false), firstMoveTargeted(false),
+      moveType(moveType)
 {
     if (moveType != MoveType::Undefined) {
         if (targetedPiece) {

@@ -80,7 +80,7 @@ void King::getPossibleMoves(std::vector<Move> &moves, const Board &b) const
     if (onBoard(x - 4)) {
         const Piece* rook = b.getPiece(x - 4, y);
         if (!hasMoved && rook && rook->getPieceType() == Type::Rook && !rook->getHasMoved()) {
-            if (!b.getPiece(x - 1, y) && !b.getPiece(x - 2, y) && !b.getPiece(x - 3, y)) {
+            if (!b.getPiece(x - 1, y) && !b.getPiece(x - 2, y) && !b.getPiece(x - 3, y) && !inCheck(b)) {
                 bool castleCheck = false;
                 for (const auto dx : {-1, -2}) {
                     auto m = Move(this, b.getPiece(x + dx, y), x, y, x + dx, y);

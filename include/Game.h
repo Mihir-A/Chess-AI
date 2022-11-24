@@ -3,6 +3,7 @@
 
 #include <vector>
 #include "Board.h"
+#include "Button.h"
 #include "Move.h"
 #include "Node.h"
 #include "SFML/Graphics.hpp"
@@ -26,6 +27,8 @@ private:
     bool canMove(Move &m) const;
     void reset();
     void basicWindowM(std::future<void>& f);
+    void drawUi();
+
     unsigned int windowSize;
     sf::RenderWindow window;
     Board board;
@@ -43,4 +46,7 @@ private:
     bool gameOver;
     AiPlayer ai;
     bool aiStarted;
+    bool aiIsWhite;
+    sf::Cursor click;
+    sf::Cursor arrow;
 };

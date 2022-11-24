@@ -9,17 +9,18 @@
 
 Game::Game()
     : windowSize(800)
-      , window(sf::VideoMode(windowSize, windowSize), "Chess", sf::Style::Titlebar + sf::Style::Close + sf::Style::Resize)
-      , brownSquare(sf::Vector2f(windowSize / 8.0f, windowSize / 8.0f))
-      , yellowSquare(sf::Vector2f(windowSize / 8.0f, windowSize / 8.0f))
-      , redSquare(sf::Vector2f(windowSize / 8.0f, windowSize / 8.0f))
-      , highlightSquare(sf::Vector2f(windowSize / 8.0f - 10, windowSize / 8.0f - 10))
-      , moveHint(15)
-      , heldPiece(nullptr)
-      , recentPiece(nullptr)
-      , gameOver(false)
-      , ai(board)
-      , aiStarted(false)
+    , window(sf::VideoMode(windowSize, windowSize), "Chess", sf::Style::Titlebar + sf::Style::Close + sf::Style::Resize)
+    , brownSquare(sf::Vector2f(windowSize / 8.0f, windowSize / 8.0f))
+    , yellowSquare(sf::Vector2f(windowSize / 8.0f, windowSize / 8.0f))
+    , redSquare(sf::Vector2f(windowSize / 8.0f, windowSize / 8.0f))
+    , highlightSquare(sf::Vector2f(windowSize / 8.0f - 10, windowSize / 8.0f - 10))
+    , moveHint(15)
+    , heldPiece(nullptr)
+    , recentPiece(nullptr)
+    , gameOver(false)
+    , ai(board)
+    , aiStarted(false)
+    , aiIsWhite(false)
 {
     brownSquare.setFillColor(sf::Color(181, 136, 99));// Tan color of the board
     yellowSquare.setFillColor(sf::Color(255, 255, 0, 130));// yellow color of the selected piece
@@ -32,6 +33,9 @@ Game::Game()
     playedMoves.reserve(10);
     getMoves();
     window.setVerticalSyncEnabled(true);
+    
+    click.loadFromSystem(sf::Cursor::Hand);
+    arrow.loadFromSystem(sf::Cursor::Arrow);
 }
 
 void Game::aiTurn()
@@ -45,6 +49,7 @@ void Game::aiTurn()
 
 void Game::play()
 {
+    drawUi();
     while (window.isOpen()) {
         sf::Event event;
         while (window.pollEvent(event)) {
@@ -135,15 +140,10 @@ void Game::play()
             }
         }
         draw();
-        if (board.isWhiteTurn() == false && aiStarted && !gameOver) {
+        if (board.isWhiteTurn() == aiIsWhite && aiStarted && !gameOver) {
             auto f = std::async(std::launch::async, &Game::aiTurn, this);
             basicWindowM(f);
         }
-        /*draw();
-        if (board.isWhiteTurn() == false && aiStarted && !gameOver) {
-            auto f = std::async(std::launch::async, &Game::aiTurn, this);
-            basicWindowM(f);
-        }*/
         //std::cout << ai.evaluatePos() << '\n';
     }
 }
@@ -351,7 +351,7 @@ bool Game::canMove(Move &m) const
     for (const Move &move : possibleMoves) {
         if (m == move) {
             //This will add the necessary settings to the move
-            if (move.getMoveType() == Move::MoveType::Castle) {
+            if (move.getMoveType() == Move::MoveType::Castle || move.getMoveType() == Move::MoveType::Promotion) {
                 m = move;
             }
             return true;
@@ -363,6 +363,7 @@ bool Game::canMove(Move &m) const
 
 void Game::reset()
 {
+    drawUi();
     board.decipherFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
     gameOver = false;
     heldPiece = nullptr;
@@ -399,4 +400,69 @@ void Game::basicWindowM(std::future<void>& f)
             }
         }
     }
+}
+
+void Game::drawUi()
+{
+    Button aiWhite(sf::Color(240, 217, 181), windowSize / 2 - 200 / 2, 100, 200, 100);
+    Button aiBlack(sf::Color(181, 136, 99), windowSize / 2 - 200 / 2, 300, 200, 100);
+    Button noAi(sf::Color::Black, windowSize / 2 - 200 / 2, 500, 200, 100);
+
+    bool notClicked = true;
+
+    while (window.isOpen() && notClicked) {
+        window.clear(sf::Color::White);
+        sf::Event event;
+
+
+        while (window.pollEvent(event)) {
+            // Close window: exit
+            if (event.type == sf::Event::Closed) {
+                window.close();
+            }
+            else if (event.type == sf::Event::Resized) {
+                // Makes sure the window is always a square
+                if (window.getSize().x != windowSize) {
+                    windowSize = window.getSize().x;
+                    window.setSize(sf::Vector2u(windowSize, windowSize));
+                }
+                else if (window.getSize().y != windowSize) {
+                    windowSize = window.getSize().y;
+                    window.setSize(sf::Vector2u(windowSize, windowSize));
+                }
+            }
+            else if(event.type == sf::Event::MouseButtonPressed) {
+                if (aiWhite.mouseOver(sf::Mouse::getPosition(window).x, sf::Mouse::getPosition(window).y)) {
+                    aiStarted = true;
+                    aiIsWhite = true;
+                    notClicked = false;
+                }
+                else if (aiBlack.mouseOver(sf::Mouse::getPosition(window).x, sf::Mouse::getPosition(window).y)) {
+                    aiStarted = true;
+                    aiIsWhite = false;
+                    notClicked = false;
+                }
+                else if (noAi.mouseOver(sf::Mouse::getPosition(window).x, sf::Mouse::getPosition(window).y)) {
+                    aiStarted = false;
+                    aiIsWhite = false;
+                    notClicked = false;
+                }
+            }
+        }
+
+        const int mouseX = sf::Mouse::getPosition(window).x;
+        const int mouseY = sf::Mouse::getPosition(window).y;
+
+        if (aiWhite.mouseOver(mouseX, mouseY) || aiBlack.mouseOver(mouseX, mouseY) || noAi.mouseOver(mouseX, mouseY)) {
+            window.setMouseCursor(click);
+        }else if (std::abs(mouseX - (int) windowSize / 2) <= 370 && std::abs(mouseY - (int)windowSize / 2) <= 370){
+            window.setMouseCursor(arrow);
+        }
+
+        aiWhite.draw(window);
+        aiBlack.draw(window);
+        noAi.draw(window);
+        window.display();
+    }
+    window.setMouseCursor(arrow);
 }

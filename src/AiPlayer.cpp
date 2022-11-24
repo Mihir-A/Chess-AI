@@ -112,6 +112,10 @@ void AiPlayer::orderMoves(std::vector<Move> &moves) const
         if (m.getTargetedPiece()) {
             m.moveValue = capturedPieceValueMultiplier * evaluatePiece(m.getTargetedPiece()) - evaluatePiece(m.getMovingPiece());
         }
+
+        if (m.getMoveType() == Move::MoveType::Promotion) {
+            m.moveValue += queenValue;
+        }
         //This will make the sorting order correct and eval moves in best to worst order
         //Checking best to worst maximizes pruning
         m.moveValue *= -1;

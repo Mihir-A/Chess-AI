@@ -13,6 +13,7 @@
     <ClCompile Include="src\Pawn.cpp" />
     <ClCompile Include="src\Move.cpp" />
     <ClCompile Include="src\AiPlayer.cpp" />
+    <ClCompile Include="src\Button.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="include\Piece.h" />
@@ -27,5 +28,6 @@
     <ClInclude Include="include\Move.h" />
     <ClInclude Include="include\Node.h" />
     <ClInclude Include="include\AiPlayer.h" />
+    <ClInclude Include="include\Button.h" />
   </ItemGroup>
 </Project>

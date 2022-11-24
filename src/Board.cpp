@@ -54,6 +54,16 @@ void Board::makeMove(const Move &m)
             b[m.getNewY()][m.getNewX() - 2] = nullptr;
         }
     }
+    else if (m.getMoveType() == Move::MoveType::Promotion) {
+        if (m.getTargetedPiece()) {
+            const_cast<Piece*>(m.getTargetedPiece())->setKill(true);
+        }
+        b[m.getOldY()][m.getOldX()] = nullptr;
+        const_cast<Piece*>(m.getMovingPiece())->setKill(true);
+        b[m.getNewY()][m.getNewX()] = new Queen(m.getMovingPiece()->isWhite(), m.getNewX(), m.getNewY());
+        auto& pieces = m.getMovingPiece()->isWhite() ? whitePieces : blackPieces;
+        pieces.push_back(b[m.getNewY()][m.getNewX()]);
+    }
 }
 
 void Board::unmakeMove(const Move &m)
@@ -88,6 +98,18 @@ void Board::unmakeMove(const Move &m)
             b[m.getNewY()][m.getNewX() - 2]->setHasMoved(m.isTargetedFirst());
         }
         b[m.getOldY()][m.getOldX()]->setHasMoved(m.isMovingFirst());
+    }
+    else if (m.getMoveType() == Move::MoveType::Promotion) {
+
+        if (m.getTargetedPiece()) {
+            const_cast<Piece*>(m.getTargetedPiece())->setKill(false);
+        }
+        const_cast<Piece*>(m.getMovingPiece())->setKill(false);
+        delete b[m.getNewY()][m.getNewX()];
+        auto& pieces = m.getMovingPiece()->isWhite() ? whitePieces : blackPieces;
+        std::erase(pieces, b[m.getNewY()][m.getNewX()]);
+        b[m.getNewY()][m.getNewX()] = const_cast<Piece*>(m.getTargetedPiece());
+        b[m.getOldY()][m.getOldX()] = const_cast<Piece*>(m.getMovingPiece());
     }
 }
 

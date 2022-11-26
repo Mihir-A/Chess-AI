@@ -1,7 +1,6 @@
 #include "Game.h"
 #include "Piece.h"
 #include "King.h"
-#include "Node.h"
 #include <chrono>
 #include <thread>
 #include <future>
@@ -9,18 +8,18 @@
 
 Game::Game()
     : windowSize(800)
-    , window(sf::VideoMode(windowSize, windowSize), "Chess", sf::Style::Titlebar + sf::Style::Close + sf::Style::Resize)
-    , brownSquare(sf::Vector2f(windowSize / 8.0f, windowSize / 8.0f))
-    , yellowSquare(sf::Vector2f(windowSize / 8.0f, windowSize / 8.0f))
-    , redSquare(sf::Vector2f(windowSize / 8.0f, windowSize / 8.0f))
-    , highlightSquare(sf::Vector2f(windowSize / 8.0f - 10, windowSize / 8.0f - 10))
-    , moveHint(15)
-    , heldPiece(nullptr)
-    , recentPiece(nullptr)
-    , gameOver(false)
-    , ai(board)
-    , aiStarted(false)
-    , aiIsWhite(false)
+      , window(sf::VideoMode(windowSize, windowSize), "Chess", sf::Style::Titlebar + sf::Style::Close + sf::Style::Resize)
+      , brownSquare(sf::Vector2f(windowSize / 8.0f, windowSize / 8.0f))
+      , yellowSquare(sf::Vector2f(windowSize / 8.0f, windowSize / 8.0f))
+      , redSquare(sf::Vector2f(windowSize / 8.0f, windowSize / 8.0f))
+      , highlightSquare(sf::Vector2f(windowSize / 8.0f - 10, windowSize / 8.0f - 10))
+      , moveHint(15)
+      , heldPiece(nullptr)
+      , recentPiece(nullptr)
+      , gameOver(false)
+      , ai(board)
+      , aiStarted(false)
+      , aiIsWhite(false)
 {
     brownSquare.setFillColor(sf::Color(181, 136, 99));// Tan color of the board
     yellowSquare.setFillColor(sf::Color(255, 255, 0, 130));// yellow color of the selected piece
@@ -33,9 +32,16 @@ Game::Game()
     playedMoves.reserve(10);
     getMoves();
     window.setVerticalSyncEnabled(true);
-    
+
     click.loadFromSystem(sf::Cursor::Hand);
     arrow.loadFromSystem(sf::Cursor::Arrow);
+
+    font.loadFromFile("assets/Montserrat-Regular.ttf");
+}
+
+Game::~Game()
+{
+    Piece::unloadTextures();
 }
 
 void Game::aiTurn()
@@ -68,7 +74,8 @@ void Game::play()
                     }
                     else if (recentPiece != nullptr) {
                         //This runs if a piece is already selected and wants to move to the space
-                        auto attemptedMove = Move(recentPiece, board.getPiece(xCord, yCord), recentPiece->getX(), recentPiece->getY(), xCord, yCord);
+                        auto attemptedMove = Move(recentPiece, board.getPiece(xCord, yCord), recentPiece->getX(), recentPiece->getY(),
+                                                  xCord, yCord);
 
                         if (canMove(attemptedMove) && recentPiece->isWhite() == board.isWhiteTurn()) {
                             board.makeMove(attemptedMove);
@@ -205,7 +212,8 @@ void Game::draw()
                     // This sets position of the held piece
                     constexpr int offset = 50;
                     heldSprite.setTexture(heldPiece->getTexture());
-                    heldSprite.setPosition(sf::Mouse::getPosition(window).x * 800.0f / windowSize - offset, sf::Mouse::getPosition(window).y * 800.0f / windowSize - offset);
+                    heldSprite.setPosition(sf::Mouse::getPosition(window).x * 800.0f / windowSize - offset,
+                                           sf::Mouse::getPosition(window).y * 800.0f / windowSize - offset);
                     drawYellowSquare(gSize * j, gSize * i);
                 }
                 else if (heldPiece == nullptr && board.getPiece(j, i) == recentPiece && recentPiece != nullptr) {
@@ -377,10 +385,10 @@ void Game::reset()
     getMoves();
 }
 
-void Game::basicWindowM(std::future<void>& f)
+void Game::basicWindowM(std::future<void> &f)
 {
     //This keeps the window responding while ai is searching for moves
-    while(f.wait_for(std::chrono::seconds(0)) != std::future_status::ready) {
+    while (f.wait_for(std::chrono::seconds(0)) != std::future_status::ready) {
         sf::Event event;
         while (window.pollEvent(event)) {
             // Close window: exit
@@ -408,6 +416,33 @@ void Game::drawUi()
     Button aiBlack(sf::Color(181, 136, 99), windowSize / 2 - 200 / 2, 300, 200, 100);
     Button noAi(sf::Color::Black, windowSize / 2 - 200 / 2, 500, 200, 100);
 
+    sf::Text chooseColor;
+    chooseColor.setFont(font);
+    chooseColor.setString("Choose Ai Color");
+    chooseColor.setCharacterSize(32);
+    chooseColor.setFillColor(sf::Color::Black);
+    chooseColor.setStyle(sf::Text::Style::Regular);
+    chooseColor.setPosition(windowSize / 2 - chooseColor.getGlobalBounds().width / 2, windowSize/ 20);
+
+    sf::Text whiteText = chooseColor;
+    whiteText.setString("White");
+    whiteText.setPosition(windowSize / 2 - whiteText.getGlobalBounds().width / 2,
+                          aiWhite.getRect().getGlobalBounds().top + aiWhite.getRect().getGlobalBounds().height / 2 - whiteText.
+                          getGlobalBounds().height / 2);
+
+    sf::Text blackText = chooseColor;
+    blackText.setString("Black");
+    blackText.setPosition(windowSize/ 2 - blackText.getGlobalBounds().width / 2,
+                          aiBlack.getRect().getGlobalBounds().top + aiBlack.getRect().getGlobalBounds().height / 2 - blackText.
+                          getGlobalBounds().height / 2);
+
+    sf::Text noAiText = chooseColor;
+    noAiText.setFillColor(sf::Color::White);
+    noAiText.setString("No Ai ");
+    noAiText.setPosition(windowSize / 2 - noAiText.getGlobalBounds().width / 2,
+                         noAi.getRect().getGlobalBounds().top + noAi.getRect().getGlobalBounds().height / 2 - noAiText.getGlobalBounds().
+                         height / 2);
+
     bool notClicked = true;
 
     while (window.isOpen() && notClicked) {
@@ -431,7 +466,7 @@ void Game::drawUi()
                     window.setSize(sf::Vector2u(windowSize, windowSize));
                 }
             }
-            else if(event.type == sf::Event::MouseButtonPressed) {
+            else if (event.type == sf::Event::MouseButtonPressed) {
                 if (aiWhite.mouseOver(sf::Mouse::getPosition(window).x, sf::Mouse::getPosition(window).y)) {
                     aiStarted = true;
                     aiIsWhite = true;
@@ -455,13 +490,18 @@ void Game::drawUi()
 
         if (aiWhite.mouseOver(mouseX, mouseY) || aiBlack.mouseOver(mouseX, mouseY) || noAi.mouseOver(mouseX, mouseY)) {
             window.setMouseCursor(click);
-        }else if (std::abs(mouseX - (int) windowSize / 2) <= 370 && std::abs(mouseY - (int)windowSize / 2) <= 370){
+        }
+        else if (std::abs(mouseX - static_cast<int>(windowSize) / 2) <= 370 && std::abs(mouseY - static_cast<int>(windowSize) / 2) <= 370) {
             window.setMouseCursor(arrow);
         }
 
         aiWhite.draw(window);
         aiBlack.draw(window);
         noAi.draw(window);
+        window.draw(chooseColor);
+        window.draw(whiteText);
+        window.draw(blackText);
+        window.draw(noAiText);
         window.display();
     }
     window.setMouseCursor(arrow);

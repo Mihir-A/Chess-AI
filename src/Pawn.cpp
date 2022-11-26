@@ -1,20 +1,10 @@
 #include "Pawn.h"
 #include "Move.h"
 #include "Board.h"
-#include "Queen.h"
 
 Pawn::Pawn(bool white, int x, int y)
     : Piece(white, x, y, Type::Pawn)
-{
-    if (white) {
-        texture.loadFromFile("assets/piece/wp.png");
-
-    }
-
-    else {
-        texture.loadFromFile("assets/piece/bp.png");
-    }
-}
+{}
 
 void Pawn::getPossibleMoves(std::vector<Move> &moves, const Board &b) const
 {
@@ -32,10 +22,11 @@ void Pawn::getPossibleMoves(std::vector<Move> &moves, const Board &b) const
         if (b.getPiece(x, y + yDir) == nullptr) {
             if (y + yDir != promoY) {
                 moves.emplace_back(this, b.getPiece(x, y + yDir), x, y, x, y + yDir);
-            }else {
+            }
+            else {
                 moves.emplace_back(this, nullptr, x, y, x, promoY, Move::MoveType::Promotion);
             }
-            
+
         }
     }
     // pawn right capture
@@ -43,7 +34,8 @@ void Pawn::getPossibleMoves(std::vector<Move> &moves, const Board &b) const
         if (b.getPiece(x + 1, y + yDir) && b.getPiece(x + 1, y + yDir)->isWhite() != this->isWhite()) {
             if (y + yDir != promoY) {
                 moves.emplace_back(this, b.getPiece(x + 1, y + yDir), x, y, x + 1, y + yDir);
-            }else {
+            }
+            else {
                 moves.emplace_back(this, b.getPiece(x + 1, y + yDir), x, y, x + 1, y + yDir, Move::MoveType::Promotion);
             }
         }
@@ -53,7 +45,8 @@ void Pawn::getPossibleMoves(std::vector<Move> &moves, const Board &b) const
         if (b.getPiece(x - 1, y + yDir) && b.getPiece(x - 1, y + yDir)->isWhite() != this->isWhite()) {
             if (y + yDir != promoY) {
                 moves.emplace_back(this, b.getPiece(x - 1, y + yDir), x, y, x - 1, y + yDir);
-            }else {
+            }
+            else {
                 moves.emplace_back(this, b.getPiece(x - 1, y + yDir), x, y, x - 1, y + yDir, Move::MoveType::Promotion);
             }
         }

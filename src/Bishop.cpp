@@ -4,15 +4,7 @@
 
 Bishop::Bishop(bool white, int x, int y)
     : Piece(white, x, y, Type::Bishop)
-{
-    if (white) {
-        texture.loadFromFile("assets/piece/wb.png");
-    }
-
-    else {
-        texture.loadFromFile("assets/piece/bb.png");
-    }
-}
+{}
 
 void Bishop::getPossibleMoves(std::vector<Move> &moves, const Board &b) const
 {

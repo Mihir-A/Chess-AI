@@ -1,6 +1,6 @@
 #include "AiPlayer.h"
 #include "King.h"
-
+#include "Move.h"
 #include <iostream>
 
 AiPlayer::AiPlayer(Board &gameBoard)
@@ -47,17 +47,17 @@ Move AiPlayer::getBestMove()
         }
     }
 
-    std::cout << "Searched Moves: " << searched << '\n';
-    std::cout << "Prunned Moves: " << prunned << '\n';
-    prunned = 0;
-    searched = 0;
+    //std::cout << "Searched Moves: " << searched << '\n';
+    //std::cout << "Prunned Moves: " << prunned << '\n';
+    //prunned = 0;
+    //searched = 0;
 
     return bestMoveFound;
 }
 
 int AiPlayer::search(int depth, bool isMaximisingPlayer, int alpha, int beta)
 {
-    searched++;
+    //searched++;
     getMoves();
     std::vector<Move> playerMoves = board.isWhiteTurn() ? whiteMoves : blackMoves;
     orderMoves(playerMoves);
@@ -190,7 +190,7 @@ int AiPlayer::evaluatePos() const
 int AiPlayer::evaluatePieceTables(bool white) const
 {
     int value = 0;
-    const std::vector<const Piece*>& pieces = white ? board.getWhitePieces() : board.getBlackPieces();
+    const std::vector<const Piece *> &pieces = white ? board.getWhitePieces() : board.getBlackPieces();
     for (const auto piece : pieces) {
         if (!piece->isDead()) {
             value += evaluatePiecePos(piece);
@@ -203,9 +203,10 @@ int AiPlayer::evaluatePiecePos(const Piece* piece) const
 {
     int index;
 
-    if(!piece->isWhite()) {
+    if (!piece->isWhite()) {
         index = piece->getX() + (7 - piece->getY()) * 8;
-    }else {
+    }
+    else {
         index = piece->getX() + piece->getY() * 8;
     }
 

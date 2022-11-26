@@ -4,15 +4,7 @@
 
 Knight::Knight(bool white, int x, int y)
     : Piece(white, x, y, Type::Knight)
-{
-    if (white) {
-        texture.loadFromFile("assets/piece/wn.png");
-    }
-
-    else {
-        texture.loadFromFile("assets/piece/bn.png");
-    }
-}
+{}
 
 void Knight::getPossibleMoves(std::vector<Move> &moves, const Board &b) const
 {

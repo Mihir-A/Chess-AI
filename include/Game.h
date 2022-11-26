@@ -5,7 +5,6 @@
 #include "Board.h"
 #include "Button.h"
 #include "Move.h"
-#include "Node.h"
 #include "SFML/Graphics.hpp"
 
 #include <future>
@@ -14,6 +13,7 @@ class Game
 {
 public:
     Game();
+    ~Game();
     void aiTurn();
     void play();
     void drawLoop();
@@ -26,7 +26,7 @@ private:
     void getMoves();
     bool canMove(Move &m) const;
     void reset();
-    void basicWindowM(std::future<void>& f);
+    void basicWindowM(std::future<void> &f);
     void drawUi();
 
     unsigned int windowSize;
@@ -49,4 +49,5 @@ private:
     bool aiIsWhite;
     sf::Cursor click;
     sf::Cursor arrow;
+    sf::Font font;
 };

@@ -6,15 +6,7 @@
 
 King::King(bool white, int x, int y)
     : Piece(white, x, y, Type::King)
-{
-    if (white) {
-        texture.loadFromFile("assets/piece/wk.png");
-    }
-
-    else {
-        texture.loadFromFile("assets/piece/bk.png");
-    }
-}
+{}
 
 void King::getPossibleMoves(std::vector<Move> &moves, const Board &b) const
 {
@@ -256,7 +248,8 @@ bool King::inCheck(const Board &b) const
     // Tall knight moves
     for (const int dx : {-2, 2}) {
         for (const int dy : {-1, 1}) {
-            if (onBoard(x + dx) && onBoard(y + dy) && b.getPiece(x + dx, y + dy) && b.getPiece(x + dx, y + dy)->isWhite() != white && b.getPiece(x + dx, y + dy)->getPieceType() ==
+            if (onBoard(x + dx) && onBoard(y + dy) && b.getPiece(x + dx, y + dy) && b.getPiece(x + dx, y + dy)->isWhite() != white && b.
+                getPiece(x + dx, y + dy)->getPieceType() ==
                 Type::Knight) {
                 return true;
             }
@@ -266,7 +259,8 @@ bool King::inCheck(const Board &b) const
     // Wide knight moves
     for (const int dx : {-1, 1}) {
         for (const int dy : {-2, 2}) {
-            if (onBoard(x + dx) && onBoard(y + dy) && b.getPiece(x + dx, y + dy) && b.getPiece(x + dx, y + dy)->isWhite() != white && b.getPiece(x + dx, y + dy)->getPieceType() ==
+            if (onBoard(x + dx) && onBoard(y + dy) && b.getPiece(x + dx, y + dy) && b.getPiece(x + dx, y + dy)->isWhite() != white && b.
+                getPiece(x + dx, y + dy)->getPieceType() ==
                 Type::Knight) {
                 return true;
             }

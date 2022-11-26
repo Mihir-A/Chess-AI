@@ -12,12 +12,45 @@
 Board::Board() : Board("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1")
 {}
 
+Board::~Board()
+{
+    for (const auto piece : whitePieces) {
+        delete piece;
+    }
+    for (const auto piece : blackPieces) {
+        delete piece;
+    }
+    whitePieces.clear();
+    blackPieces.clear();
+
+    for (auto &row : b) {
+        row.fill(nullptr);
+    }
+}
+
 Board::Board(const std::string &fenStr)
 {
     whitePieces.reserve(16);
     blackPieces.reserve(16);
     decipherFen(fenStr);
     whiteTurn = true;
+
+    int pawnCount = 0;
+    for (const auto p : whitePieces) {
+        if (p->getPieceType() == Piece::Type::Pawn) {
+            pawnCount++;
+        }
+    }
+    for (const auto p : blackPieces) {
+        if (p->getPieceType() == Piece::Type::Pawn) {
+            pawnCount++;
+        }
+    }
+
+    queens.reserve(pawnCount);
+    for (int i = 0; i < pawnCount; i ++) {
+        queens.emplace_back(new Queen(false, -1, -1), false);
+    }
 }
 
 const Piece* Board::getPiece(unsigned int x, unsigned int y) const
@@ -56,12 +89,12 @@ void Board::makeMove(const Move &m)
     }
     else if (m.getMoveType() == Move::MoveType::Promotion) {
         if (m.getTargetedPiece()) {
-            const_cast<Piece*>(m.getTargetedPiece())->setKill(true);
+            const_cast<Piece *>(m.getTargetedPiece())->setKill(true);
         }
         b[m.getOldY()][m.getOldX()] = nullptr;
-        const_cast<Piece*>(m.getMovingPiece())->setKill(true);
-        b[m.getNewY()][m.getNewX()] = new Queen(m.getMovingPiece()->isWhite(), m.getNewX(), m.getNewY());
-        auto& pieces = m.getMovingPiece()->isWhite() ? whitePieces : blackPieces;
+        const_cast<Piece *>(m.getMovingPiece())->setKill(true);
+        b[m.getNewY()][m.getNewX()] = getPromoQueen(m.getMovingPiece()->isWhite(), m.getNewX(), m.getNewY());
+        auto &pieces = m.getMovingPiece()->isWhite() ? whitePieces : blackPieces;
         pieces.push_back(b[m.getNewY()][m.getNewX()]);
     }
 }
@@ -102,14 +135,14 @@ void Board::unmakeMove(const Move &m)
     else if (m.getMoveType() == Move::MoveType::Promotion) {
 
         if (m.getTargetedPiece()) {
-            const_cast<Piece*>(m.getTargetedPiece())->setKill(false);
+            const_cast<Piece *>(m.getTargetedPiece())->setKill(false);
         }
-        const_cast<Piece*>(m.getMovingPiece())->setKill(false);
-        delete b[m.getNewY()][m.getNewX()];
-        auto& pieces = m.getMovingPiece()->isWhite() ? whitePieces : blackPieces;
+        const_cast<Piece *>(m.getMovingPiece())->setKill(false);
+        removePromoQueen(b[m.getNewY()][m.getNewX()]);
+        auto &pieces = m.getMovingPiece()->isWhite() ? whitePieces : blackPieces;
         std::erase(pieces, b[m.getNewY()][m.getNewX()]);
-        b[m.getNewY()][m.getNewX()] = const_cast<Piece*>(m.getTargetedPiece());
-        b[m.getOldY()][m.getOldX()] = const_cast<Piece*>(m.getMovingPiece());
+        b[m.getNewY()][m.getNewX()] = const_cast<Piece *>(m.getTargetedPiece());
+        b[m.getOldY()][m.getOldX()] = const_cast<Piece *>(m.getMovingPiece());
     }
 }
 
@@ -209,13 +242,11 @@ void Board::decipherFen(const std::string &fen)
     whitePieces.clear();
     blackPieces.clear();
 
-
     for (auto &row : b) {
-        std::fill(row.begin(), row.end(), nullptr);
+        row.fill(nullptr);
     }
 
     auto it = fen.begin();
-
     decipherFenBoard(it);
 }
 
@@ -232,4 +263,27 @@ bool Board::isWhiteTurn() const
 void Board::setWhiteTurn(bool t)
 {
     whiteTurn = t;
+}
+
+Piece* Board::getPromoQueen(bool white, int x, int y)
+{
+    for (auto &[piece, onBoard] : queens) {
+        if (!onBoard) {
+            onBoard = true;
+            piece->moveTo(x, y);
+            piece->setIsWhite(white);
+            return piece;
+        }
+    }
+    //Should never reach here
+    return nullptr;
+}
+
+void Board::removePromoQueen(Piece* q)
+{
+    for (auto &[piece, onBoard] : queens) {
+        if (piece == q) {
+            onBoard = false;
+        }
+    }
 }

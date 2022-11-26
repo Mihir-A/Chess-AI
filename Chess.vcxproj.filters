@@ -26,7 +26,6 @@
     <ClInclude Include="include\Rook.h" />
     <ClInclude Include="include\Pawn.h" />
     <ClInclude Include="include\Move.h" />
-    <ClInclude Include="include\Node.h" />
     <ClInclude Include="include\AiPlayer.h" />
     <ClInclude Include="include\Button.h" />
   </ItemGroup>

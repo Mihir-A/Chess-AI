@@ -1,6 +1,5 @@
 #pragma once
 #include "Board.h"
-#include "Node.h"
 #include <limits>
 
 class Game;
@@ -8,7 +7,7 @@ class Game;
 class AiPlayer
 {
 public:
-    explicit AiPlayer(Board& gameBoard);
+    explicit AiPlayer(Board &gameBoard);
     Move getBestMove();
     int evaluatePos() const;
     int evaluatePieceTables(bool white) const;
@@ -21,8 +20,8 @@ private:
     void orderMoves(std::vector<Move> &moves) const;
     static int evaluatePiece(const Piece* piece);
     int evaluatePieces(bool white) const;
-    
-    Board& board;
+
+    Board &board;
     std::vector<Move> whiteMoves;
     std::vector<Move> blackMoves;
 
@@ -115,4 +114,3 @@ private:
         -50, -30, -30, -30, -30, -30, -30, -50
     };
 };
-

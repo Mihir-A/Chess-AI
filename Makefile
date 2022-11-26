@@ -1,10 +1,10 @@
 # tool macros
 CXX ?= g++
-CFLAGS := -O2 -std=c++17 -I include/  -L lib/ -lsfml-graphics -lsfml-window -lsfml-system -pipe 
+CFLAGS := -O2 -std=c++17 -L lib/ -lsfml-graphics -lsfml-window -lsfml-system -lpthread 
 COBJFLAGS := -O2 -std=c++17 -I include/ -c
 
 # path macros
-BIN_PATH := bin
+BIN_PATH := ./
 OBJ_PATH := bin/obj
 SRC_PATH := src
 

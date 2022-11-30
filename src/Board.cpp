@@ -140,7 +140,7 @@ void Board::unmakeMove(const Move &m)
         const_cast<Piece *>(m.getMovingPiece())->setKill(false);
         removePromoQueen(b[m.getNewY()][m.getNewX()]);
         auto &pieces = m.getMovingPiece()->isWhite() ? whitePieces : blackPieces;
-        std::erase(pieces, b[m.getNewY()][m.getNewX()]);
+        pieces.erase(std::remove(pieces.begin(), pieces.end(), b[m.getNewY()][m.getNewX()]), pieces.end());
         b[m.getNewY()][m.getNewX()] = const_cast<Piece *>(m.getTargetedPiece());
         b[m.getOldY()][m.getOldX()] = const_cast<Piece *>(m.getMovingPiece());
     }

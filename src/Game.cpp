@@ -452,6 +452,8 @@ void Game::drawUi()
 
         while (window.pollEvent(event)) {
             // Close window: exit
+            const int mouseX = sf::Mouse::getPosition(window).x * 800 / windowSize;
+            const int mouseY = sf::Mouse::getPosition(window).y * 800 / windowSize;
             if (event.type == sf::Event::Closed) {
                 window.close();
             }
@@ -467,26 +469,26 @@ void Game::drawUi()
                 }
             }
             else if (event.type == sf::Event::MouseButtonPressed) {
-                if (aiWhite.mouseOver(sf::Mouse::getPosition(window).x, sf::Mouse::getPosition(window).y)) {
+                if (aiWhite.mouseOver(mouseX, mouseY)) {
                     aiStarted = true;
                     aiIsWhite = true;
                     notClicked = false;
                 }
-                else if (aiBlack.mouseOver(sf::Mouse::getPosition(window).x, sf::Mouse::getPosition(window).y)) {
+                else if (aiBlack.mouseOver(mouseX, mouseY)) {
                     aiStarted = true;
                     aiIsWhite = false;
                     notClicked = false;
                 }
-                else if (noAi.mouseOver(sf::Mouse::getPosition(window).x, sf::Mouse::getPosition(window).y)) {
+                else if (noAi.mouseOver(mouseX, mouseY)) {
                     aiStarted = false;
                     aiIsWhite = false;
                     notClicked = false;
                 }
             }
         }
-
-        const int mouseX = sf::Mouse::getPosition(window).x;
-        const int mouseY = sf::Mouse::getPosition(window).y;
+        
+        const int mouseX = sf::Mouse::getPosition(window).x * 800 / windowSize;
+        const int mouseY = sf::Mouse::getPosition(window).y * 800 / windowSize;
 
         if (aiWhite.mouseOver(mouseX, mouseY) || aiBlack.mouseOver(mouseX, mouseY) || noAi.mouseOver(mouseX, mouseY)) {
             window.setMouseCursor(click);

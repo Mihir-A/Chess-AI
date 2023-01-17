@@ -46,7 +46,7 @@
    git clone https://github.com/Mihir-A/Chess-AI.git
    cd Chess-AI
    ```
-3. Add SFML to lib and include folders
+3. Add SFML libs to lib folder
 4. Build using Make or the Visual Studio Solution
    ```sh
    make all

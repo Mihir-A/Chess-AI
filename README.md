@@ -78,6 +78,7 @@ Project Link: [https://github.com/Mihir-A/Chess-AI](https://github.com/Mihir-A/C
 ## Acknowledgments
 * [Chess.com](Chess.com) used for Neo pieces
 * [Chess-AI](https://github.com/SebLague/Chess-AI/blob/d0832f8f1d32ddfb95525d1f1e5b772a367f272e/Assets/Scripts/Core/PieceSquareTable.cs#L4) Used for Piece square tables
+* [Readme Template](https://github.com/othneildrew/Best-README-Template)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
 

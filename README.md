@@ -51,6 +51,7 @@
    ```sh
    make all
    ```
+5. Run either chess.exe or chess file depending on OS making sure the assets folder is in the same directory
 
 ## Screenshots
 <p float="left">
@@ -62,7 +63,7 @@
 <!-- LICENSE -->
 ## License
 
-Distributed under the MIT License. See `LICENSE.txt` for more information.
+Distributed under the MIT License. See `LICENSE.md` for more information.
 
 
 
@@ -77,26 +78,8 @@ Project Link: [https://github.com/Mihir-A/Chess-AI](https://github.com/Mihir-A/C
 
 <!-- ACKNOWLEDGMENTS -->
 ## Acknowledgments
-* [Chess.com](Chess.com) used for Neo pieces
+* [Chess.com](Chess.com) Used for Neo pieces
 * [Chess-AI](https://github.com/SebLague/Chess-AI/blob/d0832f8f1d32ddfb95525d1f1e5b772a367f272e/Assets/Scripts/Core/PieceSquareTable.cs#L4) Used for Piece square tables
 * [Readme Template](https://github.com/othneildrew/Best-README-Template)
 
 <p align="right">(<a href="#readme-top">back to top</a>)</p>
-
-
-
-<!-- MARKDOWN LINKS & IMAGES -->
-<!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
-[contributors-shield]: https://img.shields.io/github/contributors/Mihir-A/Chess-AI.svg?style=for-the-badge
-[contributors-url]: https://github.com/Mihir-A/Chess-AI/graphs/contributors
-[forks-shield]: https://img.shields.io/github/forks/Mihir-A/Chess-AI.svg?style=for-the-badge
-[forks-url]: https://github.com/Mihir-A/Chess-AI/network/members
-[stars-shield]: https://img.shields.io/github/stars/Mihir-A/Chess-AI.svg?style=for-the-badge
-[stars-url]: https://github.com/Mihir-A/Chess-AI/stargazers
-[issues-shield]: https://img.shields.io/github/issues/Mihir-A/Chess-AI.svg?style=for-the-badge
-[issues-url]: https://github.com/Mihir-A/Chess-AI/issues
-[license-shield]: https://img.shields.io/github/license/Mihir-A/Chess-AI.svg?style=for-the-badge
-[license-url]: https://github.com/Mihir-A/Chess-AI/blob/master/LICENSE.txt
-[linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=for-the-badge&logo=linkedin&colorB=555
-[linkedin-url]: https://linkedin.com/in/linkedin_username
-[product-screenshot]: images/screenshot.png

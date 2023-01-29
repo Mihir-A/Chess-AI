@@ -170,15 +170,8 @@ int AiPlayer::evaluatePos() const
     int whiteMaterial = evaluatePieces(true);
     int blackMaterial = evaluatePieces(false);
 
-    // int whiteMaterialWithoutPawns = whiteMaterial - board.pawns[Board.WhiteIndex].Count * pawnValue;
-    // int blackMaterialWithoutPawns = blackMaterial - board.pawns[Board.BlackIndex].Count * pawnValue;
-    // float whiteEndgamePhaseWeight = EndgamePhaseWeight(whiteMaterialWithoutPawns);
-    // float blackEndgamePhaseWeight = EndgamePhaseWeight(blackMaterialWithoutPawns);
-
     whiteEval += whiteMaterial;
     blackEval += blackMaterial;
-    //whiteEval += MopUpEval(Board.WhiteIndex, Board.BlackIndex, whiteMaterial, blackMaterial, blackEndgamePhaseWeight);
-    //blackEval += MopUpEval(Board.BlackIndex, Board.WhiteIndex, blackMaterial, whiteMaterial, whiteEndgamePhaseWeight);
 
     whiteEval += evaluatePieceTables(true);
     blackEval += evaluatePieceTables(false);

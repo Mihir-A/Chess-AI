@@ -30,13 +30,21 @@ Game::Game()
     moveHint.setFillColor(sf::Color(0, 0, 0, 25));
     moveHint.setOrigin(moveHint.getRadius(), moveHint.getRadius());
     playedMoves.reserve(10);
-    getMoves();
     window.setVerticalSyncEnabled(true);
 
     click.loadFromSystem(sf::Cursor::Hand);
     arrow.loadFromSystem(sf::Cursor::Arrow);
 
     font.loadFromFile("assets/Montserrat-Regular.ttf");
+
+    std::string fen;
+    std::cout << "Enter FEN: ";
+    std::getline(std::cin, fen);
+    if (fen.length() > 5){
+        board.decipherFen(fen);
+    }
+    getMoves();
+    
 }
 
 Game::~Game()

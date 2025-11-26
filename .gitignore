@@ -29,3 +29,5 @@
 .vs/
 bin/
 lib/cmake
+build/
+.DS_Store

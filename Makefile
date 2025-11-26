@@ -5,7 +5,7 @@ COBJFLAGS := -O2 -std=c++17 -I include/ -c
 
 # path macros
 BIN_PATH := ./
-OBJ_PATH := bin/obj
+OBJ_PATH := build/obj
 SRC_PATH := src
 
 # compile macros

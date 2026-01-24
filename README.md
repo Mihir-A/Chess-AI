@@ -47,9 +47,14 @@
    cd Chess-AI
    ```
 3. Add SFML libs to lib folder
-4. Build using Make or the Visual Studio Solution
+4. Build using Make, CMake, or the Visual Studio Solution
    ```sh
    make all
+   ```
+   Or with CMake:
+   ```sh
+   cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+   cmake --build build
    ```
 5. Run either chess.exe or chess file depending on OS making sure the assets folder is in the same directory
 

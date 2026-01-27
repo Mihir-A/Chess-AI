@@ -30,4 +30,5 @@
 bin/
 lib/cmake
 build/
+build-wasm/
 .DS_Store

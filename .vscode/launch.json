@@ -5,7 +5,7 @@
       "name": "Debug C++",
       "type": "lldb",
       "request": "launch",
-      "program": "${workspaceFolder}/build/debug/chess",
+      "program": "${workspaceFolder}/build/relwithdebinfo/chess",
       "args": [],
       "cwd": "${workspaceFolder}",
       "preLaunchTask": "CMake: build",

@@ -8,7 +8,7 @@
 <h3 align="center">Chess Ai</h3>
 
   <p align="center">
-    A chess game implemented using C++ and SFML, with an optional AI
+    A chess game implemented using C++ and SDL2, with an optional AI
   </p>
 </div>
 
@@ -36,18 +36,22 @@
   
 ### Prerequisites
 
-* C++ compiler with c++17 support (VS 20+ or gcc recomened)
+* C++ compiler with C++23 support (VS 2022+ or modern gcc/clang recommended)
+* SDL2 available to your toolchain
   
 ### Installation
 
-1. Download [SFML](https://www.sfml-dev.org/download/sfml/2.5.1/)
+1. Install SDL2
+   - macOS (Homebrew):
+     ```sh
+     brew install sdl2
+     ```
 2. Clone the repo
    ```sh
    git clone https://github.com/Mihir-A/Chess-AI.git
    cd Chess-AI
    ```
-3. Add SFML libs to lib folder
-4. Build using Make, CMake, or the Visual Studio Solution
+3. Build using Make, CMake, or the Visual Studio Solution
    ```sh
    make all
    ```
@@ -56,7 +60,7 @@
    cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
    cmake --build build
    ```
-5. Run either chess.exe or chess file depending on OS making sure the assets folder is in the same directory
+4. Run either chess.exe or chess depending on OS, making sure the assets folder is in the same directory
 
 ## Screenshots
 <p float="left">

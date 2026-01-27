@@ -1,23 +1,26 @@
 #include "Button.h"
 
-Button::Button(const sf::Color &fillColor, float x, float y, float width, float height)
-    : rect(sf::Vector2f(width, height))
+Button::Button(const SDL_Color &fillColor, int x, int y, int width, int height)
+    : fillColor(fillColor)
 {
-    rect.setPosition(x, y);
-    rect.setFillColor(fillColor);
+    rect.x = x;
+    rect.y = y;
+    rect.w = width;
+    rect.h = height;
 }
 
-bool Button::mouseOver(float x, float y) const
+bool Button::mouseOver(int x, int y) const
 {
-    return (rect.getGlobalBounds().contains(x, y));
+    return x >= rect.x && x < rect.x + rect.w && y >= rect.y && y < rect.y + rect.h;
 }
 
-void Button::draw(sf::RenderWindow &w)
+void Button::draw(SDL_Renderer* renderer) const
 {
-    w.draw(rect);
+    SDL_SetRenderDrawColor(renderer, fillColor.r, fillColor.g, fillColor.b, fillColor.a);
+    SDL_RenderFillRect(renderer, &rect);
 }
 
-const sf::RectangleShape& Button::getRect() const
+const SDL_Rect& Button::getRect() const
 {
     return rect;
 }

@@ -1,13 +1,16 @@
 #pragma once
+
 #include "AiPlayer.h"
 
+#include <SDL.h>
+#include <future>
+#include <string>
 #include <vector>
+
 #include "Board.h"
 #include "Button.h"
 #include "Move.h"
-#include "SFML/Graphics.hpp"
-
-#include <future>
+#include "stb_truetype.h"
 
 class Game
 {
@@ -22,21 +25,26 @@ private:
     void draw();
     void drawYellowSquare(float x, float y);
     void drawRedSquare(float x, float y);
+    void drawFilledCircle(int centerX, int centerY, int radius, const SDL_Color &color) const;
+    void drawHighlightSquare(int x, int y, int size) const;
+    SDL_Point measureText(const std::string &text) const;
+    void drawText(const std::string &text, int x, int y, const SDL_Color &color) const;
     void checkGameOver();
     void getMoves();
     bool canMove(Move &m) const;
     void reset();
     void basicWindowM(std::future<void> &f);
     void drawUi();
+    void enforceSquareWindow(int newWidth, int newHeight);
+    SDL_Point windowToLogical(int x, int y) const;
+    void logClickDebug(const char* phase, int windowX, int windowY, const SDL_Point &logical, int squareX, int squareY) const;
+
+    static constexpr int logicalSize = 800;
 
     unsigned int windowSize;
-    sf::RenderWindow window;
+    SDL_Window* window;
+    SDL_Renderer* renderer;
     Board board;
-    sf::RectangleShape brownSquare;
-    sf::RectangleShape yellowSquare;
-    sf::RectangleShape redSquare;
-    sf::RectangleShape highlightSquare;
-    sf::CircleShape moveHint;
     const Piece* heldPiece;
     const Piece* recentPiece;
     bool inCheck;
@@ -47,7 +55,23 @@ private:
     AiPlayer ai;
     bool aiStarted;
     bool aiIsWhite;
-    sf::Cursor click;
-    sf::Cursor arrow;
-    sf::Font font;
+    SDL_Cursor* click;
+    SDL_Cursor* arrow;
+    bool debugClicks;
+    SDL_Point lastMouseLogical;
+    bool fontLoaded;
+    float fontScale;
+    int fontAscent;
+    int fontDescent;
+    int fontLineGap;
+    std::vector<unsigned char> fontBuffer;
+    stbtt_fontinfo fontInfo;
+
+    SDL_Color lightSquareColor;
+    SDL_Color darkSquareColor;
+    SDL_Color yellowHighlightColor;
+    SDL_Color redHighlightColor;
+    SDL_Color moveHintColor;
+    SDL_Color outlineColor;
+    SDL_Color highlightFillColor;
 };

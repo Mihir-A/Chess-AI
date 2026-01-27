@@ -1,7 +1,12 @@
 #include "Piece.h"
-#include <array>
 
-std::unordered_map<std::string, sf::Texture *> Piece::textures;
+#include <array>
+#include <iostream>
+
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+
+std::unordered_map<std::string, SDL_Texture*> Piece::textures;
 
 Piece::Piece(bool white, int x, int y, Type pieceType)
     : hasMoved(false)
@@ -10,9 +15,7 @@ Piece::Piece(bool white, int x, int y, Type pieceType)
       , y(y)
       , dead(false)
       , pieceType(pieceType)
-{
-    loadTextures();
-}
+{}
 
 bool Piece::getHasMoved() const
 {
@@ -29,7 +32,7 @@ bool Piece::isWhite() const
     return white;
 }
 
-const sf::Texture& Piece::getTexture() const
+SDL_Texture* Piece::getTexture() const
 {
     std::string t = white ? "w" : "b";
     switch (pieceType) {
@@ -52,7 +55,11 @@ const sf::Texture& Piece::getTexture() const
         t += "n";
         break;
     }
-    return *(textures.at(t));
+    const auto it = textures.find(t);
+    if (it == textures.end()) {
+        return nullptr;
+    }
+    return it->second;
 }
 
 Piece::Type Piece::getPieceType() const
@@ -97,24 +104,66 @@ bool Piece::onBoard(int p)
     return (p > -1 && p < 8);
 }
 
-void Piece::loadTextures()
+void Piece::loadTextures(SDL_Renderer* renderer)
 {
-    if (!texturesLoaded) {
-        const std::array<std::string, 12> texturesName{"wk", "bk", "wb", "bb", "wn", "bn", "wp", "bp", "wr", "br", "wq", "bq"};
-
-        for (const auto &s : texturesName) {
-            textures[s] = new sf::Texture();
-            textures[s]->loadFromFile("assets/piece/" + s + ".png");
-            textures[s]->setSmooth(true);
-        }
-        texturesLoaded = true;
+    if (texturesLoaded) {
+        return;
     }
+    if (renderer == nullptr) {
+        std::cerr << "Cannot load textures without a renderer.\n";
+        return;
+    }
+
+    const std::array<std::string, 12> texturesName{"wk", "bk", "wb", "bb", "wn", "bn", "wp", "bp", "wr", "br", "wq", "bq"};
+
+    for (const auto &s : texturesName) {
+        const std::string path = "assets/piece/" + s + ".png";
+        int width = 0;
+        int height = 0;
+        int channels = 0;
+        stbi_uc* pixels = stbi_load(path.c_str(), &width, &height, &channels, STBI_rgb_alpha);
+        if (pixels == nullptr) {
+            std::cerr << "Failed to load texture pixels: " << path << " (" << stbi_failure_reason() << ")\n";
+            continue;
+        }
+
+        SDL_Surface* surface = SDL_CreateRGBSurfaceWithFormatFrom(
+            pixels,
+            width,
+            height,
+            32,
+            width * 4,
+            SDL_PIXELFORMAT_RGBA32);
+        if (surface == nullptr) {
+            std::cerr << "Failed to create surface: " << path << " (" << SDL_GetError() << ")\n";
+            stbi_image_free(pixels);
+            continue;
+        }
+
+        SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
+        SDL_FreeSurface(surface);
+        stbi_image_free(pixels);
+
+        if (texture == nullptr) {
+            std::cerr << "Failed to create texture: " << path << " (" << SDL_GetError() << ")\n";
+            continue;
+        }
+
+        SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_BLEND);
+        textures[s] = texture;
+    }
+
+    texturesLoaded = true;
 }
 
 void Piece::unloadTextures()
 {
-    for (auto [name, texture] : textures) {
-        delete texture;
+    for (auto &[name, texture] : textures) {
+        if (texture != nullptr) {
+            SDL_DestroyTexture(texture);
+        }
+        texture = nullptr;
     }
     textures.clear();
+    texturesLoaded = false;
 }

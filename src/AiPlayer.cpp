@@ -1,6 +1,7 @@
 #include "AiPlayer.h"
 #include "King.h"
 #include "Move.h"
+#include <algorithm>
 #include <iostream>
 
 AiPlayer::AiPlayer(Board &gameBoard)

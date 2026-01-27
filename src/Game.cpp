@@ -144,7 +144,7 @@ Game::Game()
 
     std::string fen;
     std::cout << "Enter FEN: ";
-    std::getline(std::cin, fen);
+    //std::getline(std::cin, fen);
     if (fen.length() > 5) {
         board.decipherFen(fen);
     }

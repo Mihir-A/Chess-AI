@@ -14,7 +14,12 @@ set(INCLUDE_DIR ${CMAKE_SOURCE_DIR}/include)
 
 option(CHESS_VENDORED_SDL2 "Build SDL2 from source via FetchContent" ON)
 
-if(CHESS_VENDORED_SDL2)
+if(EMSCRIPTEN)
+    # When targeting WebAssembly, SDL2 is provided by Emscripten's ports.
+    set(CHESS_VENDORED_SDL2 OFF CACHE BOOL "" FORCE)
+    set(CMAKE_EXECUTABLE_SUFFIX ".html")
+    message(STATUS "Configuring for Emscripten/WebAssembly (using SDL2 port)")
+elseif(CHESS_VENDORED_SDL2)
     include(FetchContent)
 
     # Keep the SDL build minimal and self-contained.
@@ -45,18 +50,36 @@ file(GLOB SOURCES "src/*.cpp")
 add_executable(${PROJECT_NAME} ${SOURCES})
 target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_23)
 
-# SDL2main may be required on some platforms (e.g., Windows GUI apps).
-if(TARGET SDL2::SDL2main)
-    # SDL2main must appear before SDL2 on the link line.
-    target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2main)
-endif()
-
-if(TARGET SDL2::SDL2)
-    target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2)
-elseif(TARGET SDL2::SDL2-static)
-    target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2-static)
+if(EMSCRIPTEN)
+    # Use SDL2 via Emscripten ports and bundle assets for runtime loading.
+    # Note: -sUSE_SDL must be present on both compile and link steps.
+    target_compile_options(
+        ${PROJECT_NAME}
+        PRIVATE
+        "-sUSE_SDL=2"
+    )
+    target_link_options(
+        ${PROJECT_NAME}
+        PRIVATE
+        "-sUSE_SDL=2"
+        "-sALLOW_MEMORY_GROWTH=1"
+        "-sFORCE_FILESYSTEM=1"
+        "--preload-file" "${CMAKE_SOURCE_DIR}/assets@/assets"
+    )
 else()
-    message(FATAL_ERROR "SDL2 target not found. Disable CHESS_VENDORED_SDL2 or install SDL2.")
+    # SDL2main may be required on some platforms (e.g., Windows GUI apps).
+    if(TARGET SDL2::SDL2main)
+        # SDL2main must appear before SDL2 on the link line.
+        target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2main)
+    endif()
+
+    if(TARGET SDL2::SDL2)
+        target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2)
+    elseif(TARGET SDL2::SDL2-static)
+        target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2-static)
+    else()
+        message(FATAL_ERROR "SDL2 target not found. Disable CHESS_VENDORED_SDL2 or install SDL2.")
+    endif()
 endif()
 
 # Create output directories if they don't exist
@@ -66,10 +89,17 @@ file(MAKE_DIRECTORY ${CMAKE_SOURCE_DIR}/build/release)
 # Use modern target_include_directories
 target_include_directories(${PROJECT_NAME} PRIVATE ${INCLUDE_DIR})
 
-# Set output directories for different build types
-set_target_properties(${PROJECT_NAME} PROPERTIES
-    RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_SOURCE_DIR}/build/debug
-    RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_SOURCE_DIR}/build/release
-    RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO ${CMAKE_SOURCE_DIR}/build/relwithdebinfo
-    RUNTIME_OUTPUT_DIRECTORY_MINSIZEREL ${CMAKE_SOURCE_DIR}/build/minsizerel
-)
+if(EMSCRIPTEN)
+    # Single-config generators are typical for Emscripten; keep output simple.
+    set_target_properties(${PROJECT_NAME} PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY ${CMAKE_SOURCE_DIR}/build/wasm
+    )
+else()
+    # Set output directories for different build types
+    set_target_properties(${PROJECT_NAME} PROPERTIES
+        RUNTIME_OUTPUT_DIRECTORY_DEBUG ${CMAKE_SOURCE_DIR}/build/debug
+        RUNTIME_OUTPUT_DIRECTORY_RELEASE ${CMAKE_SOURCE_DIR}/build/release
+        RUNTIME_OUTPUT_DIRECTORY_RELWITHDEBINFO ${CMAKE_SOURCE_DIR}/build/relwithdebinfo
+        RUNTIME_OUTPUT_DIRECTORY_MINSIZEREL ${CMAKE_SOURCE_DIR}/build/minsizerel
+    )
+endif()

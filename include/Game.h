@@ -19,9 +19,12 @@ public:
     ~Game();
     void aiTurn();
     void play();
+    bool tick();
     void drawLoop();
 
 private:
+    bool playFrame();
+    void drawUiFrame();
     void draw();
     void drawYellowSquare(float x, float y);
     void drawRedSquare(float x, float y);
@@ -55,6 +58,8 @@ private:
     AiPlayer ai;
     bool aiStarted;
     bool aiIsWhite;
+    bool aiPending;
+    bool menuActive;
     SDL_Cursor* click;
     SDL_Cursor* arrow;
     bool debugClicks;

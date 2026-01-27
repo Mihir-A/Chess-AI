@@ -58,6 +58,8 @@ Game::Game()
       , ai(board)
       , aiStarted(false)
       , aiIsWhite(false)
+      , aiPending(false)
+      , menuActive(true)
       , click(nullptr)
       , arrow(nullptr)
       , debugClicks(true)
@@ -292,70 +294,64 @@ void Game::aiTurn()
 
 void Game::play()
 {
+    menuActive = true;
     drawUi();
 
     bool running = window != nullptr && renderer != nullptr;
     while (running) {
-        SDL_Event event;
-        while (SDL_PollEvent(&event) != 0) {
-            if (event.type == SDL_QUIT) {
-                running = false;
+        running = playFrame();
+    }
+}
+
+bool Game::tick()
+{
+    if (window == nullptr || renderer == nullptr) {
+        return false;
+    }
+
+    if (menuActive) {
+        drawUiFrame();
+        return window != nullptr && renderer != nullptr;
+    }
+
+    return playFrame();
+}
+
+bool Game::playFrame()
+{
+    if (window == nullptr || renderer == nullptr) {
+        return false;
+    }
+
+    bool running = true;
+    SDL_Event event;
+    while (SDL_PollEvent(&event) != 0) {
+        if (event.type == SDL_QUIT) {
+            running = false;
+        }
+        else if (event.type == SDL_MOUSEMOTION) {
+            lastMouseLogical = windowToLogical(event.motion.x, event.motion.y);
+        }
+        else if (event.type == SDL_MOUSEBUTTONDOWN) {
+            const SDL_Point mouse = windowToLogical(event.button.x, event.button.y);
+            lastMouseLogical = mouse;
+            if (mouse.x < 0 || mouse.y < 0) {
+                logClickDebug("down-outside", event.button.x, event.button.y, mouse, -1, -1);
+                continue;
             }
-            else if (event.type == SDL_MOUSEMOTION) {
-                lastMouseLogical = windowToLogical(event.motion.x, event.motion.y);
-            }
-            else if (event.type == SDL_MOUSEBUTTONDOWN) {
-                const SDL_Point mouse = windowToLogical(event.button.x, event.button.y);
-                lastMouseLogical = mouse;
-                if (mouse.x < 0 || mouse.y < 0) {
-                    logClickDebug("down-outside", event.button.x, event.button.y, mouse, -1, -1);
-                    continue;
+            const int xCord = mouse.x / (logicalSize / 8);
+            const int yCord = mouse.y / (logicalSize / 8);
+            logClickDebug("down", event.button.x, event.button.y, mouse, xCord, yCord);
+
+            if (xCord < 8 && xCord > -1 && yCord < 8 && yCord > -1) {
+                const Piece* clickedPiece = board.getPiece(xCord, yCord);
+                if (clickedPiece != nullptr && clickedPiece->isWhite() == board.isWhiteTurn()) {
+                    heldPiece = clickedPiece;
                 }
-                const int xCord = mouse.x / (logicalSize / 8);
-                const int yCord = mouse.y / (logicalSize / 8);
-                logClickDebug("down", event.button.x, event.button.y, mouse, xCord, yCord);
+                else if (recentPiece != nullptr) {
+                    auto attemptedMove = Move(recentPiece, board.getPiece(xCord, yCord), recentPiece->getX(), recentPiece->getY(), xCord, yCord);
 
-                if (xCord < 8 && xCord > -1 && yCord < 8 && yCord > -1) {
-                    const Piece* clickedPiece = board.getPiece(xCord, yCord);
-                    if (clickedPiece != nullptr && clickedPiece->isWhite() == board.isWhiteTurn()) {
-                        heldPiece = clickedPiece;
-                    }
-                    else if (recentPiece != nullptr) {
-                        auto attemptedMove = Move(recentPiece, board.getPiece(xCord, yCord), recentPiece->getX(), recentPiece->getY(), xCord, yCord);
-
-                        if (canMove(attemptedMove) && recentPiece->isWhite() == board.isWhiteTurn()) {
-                            board.makeMove(attemptedMove);
-                            playedMoves.push_back(attemptedMove);
-                            board.changeTurn();
-                            getMoves();
-                            recentPiece = nullptr;
-                        }
-                    }
-                }
-            }
-            else if (event.type == SDL_MOUSEBUTTONUP && heldPiece != nullptr) {
-                const SDL_Point mouse = windowToLogical(event.button.x, event.button.y);
-                lastMouseLogical = mouse;
-                if (mouse.x < 0 || mouse.y < 0) {
-                    logClickDebug("up-outside", event.button.x, event.button.y, mouse, -1, -1);
-                    heldPiece = nullptr;
-                    continue;
-                }
-                const int xCord = mouse.x / (logicalSize / 8);
-                const int yCord = mouse.y / (logicalSize / 8);
-                logClickDebug("up", event.button.x, event.button.y, mouse, xCord, yCord);
-
-                if (xCord < 8 && xCord > -1 && yCord < 8 && yCord > -1) {
-                    if (heldPiece == recentPiece) {
-                        recentPiece = nullptr;
-                    }
-                    else {
-                        recentPiece = heldPiece;
-                    }
-
-                    auto attemptedMove = Move(heldPiece, board.getPiece(xCord, yCord), heldPiece->getX(), heldPiece->getY(), xCord, yCord);
-
-                    if (canMove(attemptedMove)) {
+                    if (canMove(attemptedMove) && recentPiece->isWhite() == board.isWhiteTurn()) {
                         board.makeMove(attemptedMove);
                         playedMoves.push_back(attemptedMove);
                         board.changeTurn();
@@ -363,41 +359,91 @@ void Game::play()
                         recentPiece = nullptr;
                     }
                 }
-                heldPiece = nullptr;
-            }
-            else if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_d) {
-                if (!playedMoves.empty()) {
-                    board.unmakeMove(playedMoves.back());
-                    playedMoves.pop_back();
-                    board.changeTurn();
-                    getMoves();
-                }
-                if (!playedMoves.empty()) {
-                    board.unmakeMove(playedMoves.back());
-                    playedMoves.pop_back();
-                    board.changeTurn();
-                    getMoves();
-                }
-                gameOver = false;
-            }
-            else if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_r) {
-                reset();
-            }
-            else if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_RESIZED) {
-                enforceSquareWindow(event.window.data1, event.window.data2);
-            }
-            else if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_a) {
-                aiStarted = !aiStarted;
             }
         }
+        else if (event.type == SDL_MOUSEBUTTONUP && heldPiece != nullptr) {
+            const SDL_Point mouse = windowToLogical(event.button.x, event.button.y);
+            lastMouseLogical = mouse;
+            if (mouse.x < 0 || mouse.y < 0) {
+                logClickDebug("up-outside", event.button.x, event.button.y, mouse, -1, -1);
+                heldPiece = nullptr;
+                continue;
+            }
+            const int xCord = mouse.x / (logicalSize / 8);
+            const int yCord = mouse.y / (logicalSize / 8);
+            logClickDebug("up", event.button.x, event.button.y, mouse, xCord, yCord);
 
-        draw();
+            if (xCord < 8 && xCord > -1 && yCord < 8 && yCord > -1) {
+                if (heldPiece == recentPiece) {
+                    recentPiece = nullptr;
+                }
+                else {
+                    recentPiece = heldPiece;
+                }
 
-        if (board.isWhiteTurn() == aiIsWhite && aiStarted && !gameOver) {
-            auto f = std::async(std::launch::async, &Game::aiTurn, this);
-            basicWindowM(f);
+                auto attemptedMove = Move(heldPiece, board.getPiece(xCord, yCord), heldPiece->getX(), heldPiece->getY(), xCord, yCord);
+
+                if (canMove(attemptedMove)) {
+                    board.makeMove(attemptedMove);
+                    playedMoves.push_back(attemptedMove);
+                    board.changeTurn();
+                    getMoves();
+                    recentPiece = nullptr;
+                }
+            }
+            heldPiece = nullptr;
+        }
+        else if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_d) {
+            if (!playedMoves.empty()) {
+                board.unmakeMove(playedMoves.back());
+                playedMoves.pop_back();
+                board.changeTurn();
+                getMoves();
+            }
+            if (!playedMoves.empty()) {
+                board.unmakeMove(playedMoves.back());
+                playedMoves.pop_back();
+                board.changeTurn();
+                getMoves();
+            }
+            gameOver = false;
+        }
+        else if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_r) {
+            reset();
+        }
+        else if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_RESIZED) {
+            enforceSquareWindow(event.window.data1, event.window.data2);
+        }
+        else if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_a) {
+            aiStarted = !aiStarted;
         }
     }
+
+    draw();
+
+#ifdef __EMSCRIPTEN__
+    if (aiPending) {
+        if (board.isWhiteTurn() == aiIsWhite && aiStarted && !gameOver) {
+            aiTurn();
+        }
+        aiPending = false;
+    }
+    else if (board.isWhiteTurn() == aiIsWhite && aiStarted && !gameOver) {
+        // Defer AI to the next frame so the browser can present the player's move first.
+        aiPending = true;
+    }
+#else
+    if (board.isWhiteTurn() == aiIsWhite && aiStarted && !gameOver) {
+        auto f = std::async(std::launch::async, &Game::aiTurn, this);
+        basicWindowM(f);
+    }
+#endif
+
+    if (!running || window == nullptr || renderer == nullptr) {
+        return false;
+    }
+
+    return true;
 }
 
 void Game::drawLoop()
@@ -733,6 +779,7 @@ void Game::reset()
     drawUi();
     board.decipherFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
     gameOver = false;
+    aiPending = false;
     heldPiece = nullptr;
     recentPiece = nullptr;
     inCheck = false;
@@ -762,6 +809,19 @@ void Game::basicWindowM(std::future<void> &f)
 
 void Game::drawUi()
 {
+    menuActive = true;
+    while (window != nullptr && menuActive) {
+        drawUiFrame();
+    }
+    SDL_SetCursor(arrow);
+}
+
+void Game::drawUiFrame()
+{
+    if (window == nullptr || renderer == nullptr) {
+        return;
+    }
+
     const SDL_Color lightButton{240, 217, 181, 255};
     const SDL_Color darkButton{181, 136, 99, 255};
     const SDL_Color blackButton{0, 0, 0, 255};
@@ -770,46 +830,11 @@ void Game::drawUi()
     Button aiBlack(darkButton, logicalSize / 2 - 100, 300, 200, 100);
     Button noAi(blackButton, logicalSize / 2 - 100, 500, 200, 100);
 
-    bool notClicked = true;
-    while (window != nullptr && notClicked) {
-        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-        SDL_RenderClear(renderer);
+    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+    SDL_RenderClear(renderer);
 
-        SDL_Event event;
-        while (SDL_PollEvent(&event) != 0) {
-            int mouseX = 0;
-            int mouseY = 0;
-            SDL_GetMouseState(&mouseX, &mouseY);
-            const SDL_Point mouse = windowToLogical(mouseX, mouseY);
-            mouseX = mouse.x;
-            mouseY = mouse.y;
-
-            if (event.type == SDL_QUIT) {
-                SDL_DestroyWindow(window);
-                window = nullptr;
-            }
-            else if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_RESIZED) {
-                enforceSquareWindow(event.window.data1, event.window.data2);
-            }
-            else if (event.type == SDL_MOUSEBUTTONDOWN) {
-                if (aiWhite.mouseOver(mouseX, mouseY)) {
-                    aiStarted = true;
-                    aiIsWhite = true;
-                    notClicked = false;
-                }
-                else if (aiBlack.mouseOver(mouseX, mouseY)) {
-                    aiStarted = true;
-                    aiIsWhite = false;
-                    notClicked = false;
-                }
-                else if (noAi.mouseOver(mouseX, mouseY)) {
-                    aiStarted = false;
-                    aiIsWhite = false;
-                    notClicked = false;
-                }
-            }
-        }
-
+    SDL_Event event;
+    while (SDL_PollEvent(&event) != 0) {
         int mouseX = 0;
         int mouseY = 0;
         SDL_GetMouseState(&mouseX, &mouseY);
@@ -817,67 +842,101 @@ void Game::drawUi()
         mouseX = mouse.x;
         mouseY = mouse.y;
 
-        const bool hoverWhite = aiWhite.mouseOver(mouseX, mouseY);
-        const bool hoverBlack = aiBlack.mouseOver(mouseX, mouseY);
-        const bool hoverNoAi = noAi.mouseOver(mouseX, mouseY);
-
-        if (hoverWhite || hoverBlack || hoverNoAi) {
-            SDL_SetCursor(click != nullptr ? click : arrow);
+        if (event.type == SDL_QUIT) {
+            SDL_DestroyWindow(window);
+            window = nullptr;
         }
-        else {
-            SDL_SetCursor(arrow);
+        else if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_RESIZED) {
+            enforceSquareWindow(event.window.data1, event.window.data2);
         }
-
-        aiWhite.draw(renderer);
-        aiBlack.draw(renderer);
-        noAi.draw(renderer);
-
-        const SDL_Color textBlack{0, 0, 0, 255};
-        const SDL_Color textWhite{255, 255, 255, 255};
-
-        const std::string chooseText = "Choose Ai Color";
-        const SDL_Point chooseSize = measureText(chooseText);
-        const int chooseX = logicalSize / 2 - chooseSize.x / 2;
-        const int chooseY = logicalSize / 20;
-        drawText(chooseText, chooseX, chooseY, textBlack);
-
-        const std::string whiteText = "White";
-        const SDL_Point whiteSize = measureText(whiteText);
-        const SDL_Rect whiteRect = aiWhite.getRect();
-        const int whiteX = whiteRect.x + whiteRect.w / 2 - whiteSize.x / 2;
-        const int whiteY = whiteRect.y + whiteRect.h / 2 - whiteSize.y / 2;
-        drawText(whiteText, whiteX, whiteY, textBlack);
-
-        const std::string blackText = "Black";
-        const SDL_Point blackSize = measureText(blackText);
-        const SDL_Rect blackRect = aiBlack.getRect();
-        const int blackX = blackRect.x + blackRect.w / 2 - blackSize.x / 2;
-        const int blackY = blackRect.y + blackRect.h / 2 - blackSize.y / 2;
-        drawText(blackText, blackX, blackY, textBlack);
-
-        const std::string noAiText = "No Ai";
-        const SDL_Point noAiSize = measureText(noAiText);
-        const SDL_Rect noAiRect = noAi.getRect();
-        const int noAiX = noAiRect.x + noAiRect.w / 2 - noAiSize.x / 2;
-        const int noAiY = noAiRect.y + noAiRect.h / 2 - noAiSize.y / 2;
-        drawText(noAiText, noAiX, noAiY, textWhite);
-
-        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 220);
-        if (hoverWhite) {
-            SDL_Rect r = aiWhite.getRect();
-            SDL_RenderDrawRect(renderer, &r);
+        else if (event.type == SDL_MOUSEBUTTONDOWN) {
+            if (aiWhite.mouseOver(mouseX, mouseY)) {
+                aiStarted = true;
+                aiIsWhite = true;
+                menuActive = false;
+            }
+            else if (aiBlack.mouseOver(mouseX, mouseY)) {
+                aiStarted = true;
+                aiIsWhite = false;
+                menuActive = false;
+            }
+            else if (noAi.mouseOver(mouseX, mouseY)) {
+                aiStarted = false;
+                aiIsWhite = false;
+                menuActive = false;
+            }
         }
-        if (hoverBlack) {
-            SDL_Rect r = aiBlack.getRect();
-            SDL_RenderDrawRect(renderer, &r);
-        }
-        if (hoverNoAi) {
-            SDL_Rect r = noAi.getRect();
-            SDL_RenderDrawRect(renderer, &r);
-        }
-
-        SDL_RenderPresent(renderer);
     }
 
-    SDL_SetCursor(arrow);
+    int mouseX = 0;
+    int mouseY = 0;
+    SDL_GetMouseState(&mouseX, &mouseY);
+    const SDL_Point mouse = windowToLogical(mouseX, mouseY);
+    mouseX = mouse.x;
+    mouseY = mouse.y;
+
+    const bool hoverWhite = aiWhite.mouseOver(mouseX, mouseY);
+    const bool hoverBlack = aiBlack.mouseOver(mouseX, mouseY);
+    const bool hoverNoAi = noAi.mouseOver(mouseX, mouseY);
+
+    if (hoverWhite || hoverBlack || hoverNoAi) {
+        SDL_SetCursor(click != nullptr ? click : arrow);
+    }
+    else {
+        SDL_SetCursor(arrow);
+    }
+
+    aiWhite.draw(renderer);
+    aiBlack.draw(renderer);
+    noAi.draw(renderer);
+
+    const SDL_Color textBlack{0, 0, 0, 255};
+    const SDL_Color textWhite{255, 255, 255, 255};
+
+    const std::string chooseText = "Choose Ai Color";
+    const SDL_Point chooseSize = measureText(chooseText);
+    const int chooseX = logicalSize / 2 - chooseSize.x / 2;
+    const int chooseY = logicalSize / 20;
+    drawText(chooseText, chooseX, chooseY, textBlack);
+
+    const std::string whiteText = "White";
+    const SDL_Point whiteSize = measureText(whiteText);
+    const SDL_Rect whiteRect = aiWhite.getRect();
+    const int whiteX = whiteRect.x + whiteRect.w / 2 - whiteSize.x / 2;
+    const int whiteY = whiteRect.y + whiteRect.h / 2 - whiteSize.y / 2;
+    drawText(whiteText, whiteX, whiteY, textBlack);
+
+    const std::string blackText = "Black";
+    const SDL_Point blackSize = measureText(blackText);
+    const SDL_Rect blackRect = aiBlack.getRect();
+    const int blackX = blackRect.x + blackRect.w / 2 - blackSize.x / 2;
+    const int blackY = blackRect.y + blackRect.h / 2 - blackSize.y / 2;
+    drawText(blackText, blackX, blackY, textBlack);
+
+    const std::string noAiText = "No Ai";
+    const SDL_Point noAiSize = measureText(noAiText);
+    const SDL_Rect noAiRect = noAi.getRect();
+    const int noAiX = noAiRect.x + noAiRect.w / 2 - noAiSize.x / 2;
+    const int noAiY = noAiRect.y + noAiRect.h / 2 - noAiSize.y / 2;
+    drawText(noAiText, noAiX, noAiY, textWhite);
+
+    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 220);
+    if (hoverWhite) {
+        SDL_Rect r = aiWhite.getRect();
+        SDL_RenderDrawRect(renderer, &r);
+    }
+    if (hoverBlack) {
+        SDL_Rect r = aiBlack.getRect();
+        SDL_RenderDrawRect(renderer, &r);
+    }
+    if (hoverNoAi) {
+        SDL_Rect r = noAi.getRect();
+        SDL_RenderDrawRect(renderer, &r);
+    }
+
+    SDL_RenderPresent(renderer);
+
+    if (!menuActive) {
+        SDL_SetCursor(arrow);
+    }
 }

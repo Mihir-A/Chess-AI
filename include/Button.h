@@ -1,13 +1,16 @@
 #pragma once
-#include <SFML/Graphics.hpp>
+
+#include <SDL.h>
 
 class Button
 {
 public:
-    Button(const sf::Color &, float x, float y, float width, float height);
-    bool mouseOver(float x, float y) const;
-    void draw(sf::RenderWindow &w);
-    const sf::RectangleShape& getRect() const;
+    Button(const SDL_Color &fillColor, int x, int y, int width, int height);
+    bool mouseOver(int x, int y) const;
+    void draw(SDL_Renderer* renderer) const;
+    const SDL_Rect& getRect() const;
+
 private:
-    sf::RectangleShape rect;
+    SDL_Rect rect{};
+    SDL_Color fillColor{};
 };

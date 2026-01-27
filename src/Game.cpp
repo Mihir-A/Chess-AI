@@ -1,55 +1,284 @@
+#define STB_TRUETYPE_IMPLEMENTATION
 #include "Game.h"
-#include "Piece.h"
+
 #include "King.h"
+#include "Piece.h"
+
+#include <algorithm>
 #include <chrono>
-#include <thread>
+#include <cmath>
+#include <cstdlib>
+#include <fstream>
 #include <future>
 #include <iostream>
+#include <iterator>
+#include <string>
+#include <thread>
+
+namespace {
+
+const char* pieceTypeToString(Piece::Type type)
+{
+    switch (type) {
+    case Piece::Type::Pawn:
+        return "Pawn";
+    case Piece::Type::Rook:
+        return "Rook";
+    case Piece::Type::Queen:
+        return "Queen";
+    case Piece::Type::King:
+        return "King";
+    case Piece::Type::Bishop:
+        return "Bishop";
+    case Piece::Type::Knight:
+        return "Knight";
+    }
+    return "Unknown";
+}
+
+std::string describePiece(const Piece* piece)
+{
+    if (piece == nullptr) {
+        return "none";
+    }
+    const char* color = piece->isWhite() ? "white" : "black";
+    return std::string(color) + " " + pieceTypeToString(piece->getPieceType());
+}
+
+} // namespace
 
 Game::Game()
     : windowSize(800)
-      , window(sf::VideoMode(windowSize, windowSize), "Chess", sf::Style::Titlebar + sf::Style::Close + sf::Style::Resize)
-      , brownSquare(sf::Vector2f(windowSize / 8.0f, windowSize / 8.0f))
-      , yellowSquare(sf::Vector2f(windowSize / 8.0f, windowSize / 8.0f))
-      , redSquare(sf::Vector2f(windowSize / 8.0f, windowSize / 8.0f))
-      , highlightSquare(sf::Vector2f(windowSize / 8.0f - 10, windowSize / 8.0f - 10))
-      , moveHint(15)
+      , window(nullptr)
+      , renderer(nullptr)
       , heldPiece(nullptr)
       , recentPiece(nullptr)
+      , inCheck(false)
       , gameOver(false)
       , ai(board)
       , aiStarted(false)
       , aiIsWhite(false)
+      , click(nullptr)
+      , arrow(nullptr)
+      , debugClicks(true)
+      , lastMouseLogical{0, 0}
+      , fontLoaded(false)
+      , fontScale(1.0f)
+      , fontAscent(0)
+      , fontDescent(0)
+      , fontLineGap(0)
+      , fontBuffer()
+      , fontInfo{}
+      , lightSquareColor{240, 217, 181, 255}
+      , darkSquareColor{181, 136, 99, 255}
+      , yellowHighlightColor{255, 255, 0, 130}
+      , redHighlightColor{235, 97, 80, 204}
+      , moveHintColor{0, 0, 0, 25}
+      , outlineColor{255, 255, 255, 166}
+      , highlightFillColor{255, 255, 255, 32}
 {
-    brownSquare.setFillColor(sf::Color(181, 136, 99));// Tan color of the board
-    yellowSquare.setFillColor(sf::Color(255, 255, 0, 130));// yellow color of the selected piece
-    redSquare.setFillColor(sf::Color(235, 97, 80, 204));//Color of king when in check
-    highlightSquare.setFillColor(sf::Color(0, 0, 0, 0));
-    highlightSquare.setOutlineColor(sf::Color(255, 255, 255, 166));
-    highlightSquare.setOutlineThickness(5);
-    moveHint.setFillColor(sf::Color(0, 0, 0, 25));
-    moveHint.setOrigin(moveHint.getRadius(), moveHint.getRadius());
+    if (const char* env = std::getenv("CHESS_DEBUG_CLICKS"); env != nullptr) {
+        debugClicks = std::string(env) != "0";
+    }
+
+    if (SDL_Init(SDL_INIT_VIDEO) != 0) {
+        std::cerr << "SDL_Init failed: " << SDL_GetError() << '\n';
+        return;
+    }
+
+    // Prefer crisper scaling when the logical render size is scaled.
+    SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "0");
+
+    window = SDL_CreateWindow(
+        "Chess",
+        SDL_WINDOWPOS_CENTERED,
+        SDL_WINDOWPOS_CENTERED,
+        static_cast<int>(windowSize),
+        static_cast<int>(windowSize),
+        SDL_WINDOW_SHOWN | SDL_WINDOW_RESIZABLE | SDL_WINDOW_ALLOW_HIGHDPI);
+    if (window == nullptr) {
+        std::cerr << "SDL_CreateWindow failed: " << SDL_GetError() << '\n';
+        return;
+    }
+
+    renderer = SDL_CreateRenderer(window, -1, SDL_RENDERER_ACCELERATED | SDL_RENDERER_PRESENTVSYNC);
+    if (renderer == nullptr) {
+        std::cerr << "SDL_CreateRenderer failed: " << SDL_GetError() << '\n';
+        return;
+    }
+
+    SDL_SetRenderDrawBlendMode(renderer, SDL_BLENDMODE_BLEND);
+    SDL_RenderSetLogicalSize(renderer, logicalSize, logicalSize);
+
+    click = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_HAND);
+    arrow = SDL_CreateSystemCursor(SDL_SYSTEM_CURSOR_ARROW);
+    SDL_SetCursor(arrow);
+
+    {
+        std::ifstream fontFile("assets/Montserrat-Regular.ttf", std::ios::binary);
+        if (!fontFile) {
+            std::cerr << "Failed to open font file: assets/Montserrat-Regular.ttf\n";
+        }
+        else {
+            fontBuffer.assign(std::istreambuf_iterator<char>(fontFile), std::istreambuf_iterator<char>());
+            if (fontBuffer.empty()) {
+                std::cerr << "Font file was empty: assets/Montserrat-Regular.ttf\n";
+            }
+            else {
+                const int offset = stbtt_GetFontOffsetForIndex(fontBuffer.data(), 0);
+                if (offset < 0 || stbtt_InitFont(&fontInfo, fontBuffer.data(), offset) == 0) {
+                    std::cerr << "Failed to initialize stb_truetype font.\n";
+                }
+                else {
+                    fontLoaded = true;
+                    fontScale = stbtt_ScaleForPixelHeight(&fontInfo, 32.0f);
+                    stbtt_GetFontVMetrics(&fontInfo, &fontAscent, &fontDescent, &fontLineGap);
+                }
+            }
+        }
+    }
+
+    Piece::loadTextures(renderer);
+
     playedMoves.reserve(10);
-    window.setVerticalSyncEnabled(true);
-
-    click.loadFromSystem(sf::Cursor::Hand);
-    arrow.loadFromSystem(sf::Cursor::Arrow);
-
-    font.loadFromFile("assets/Montserrat-Regular.ttf");
 
     std::string fen;
     std::cout << "Enter FEN: ";
     std::getline(std::cin, fen);
-    if (fen.length() > 5){
+    if (fen.length() > 5) {
         board.decipherFen(fen);
     }
     getMoves();
-    
 }
 
 Game::~Game()
 {
     Piece::unloadTextures();
+
+    if (click != nullptr) {
+        SDL_FreeCursor(click);
+        click = nullptr;
+    }
+    if (arrow != nullptr) {
+        SDL_FreeCursor(arrow);
+        arrow = nullptr;
+    }
+
+    if (renderer != nullptr) {
+        SDL_DestroyRenderer(renderer);
+        renderer = nullptr;
+    }
+    if (window != nullptr) {
+        SDL_DestroyWindow(window);
+        window = nullptr;
+    }
+    SDL_Quit();
+}
+
+SDL_Point Game::windowToLogical(int x, int y) const
+{
+    // SDL_RenderSetLogicalSize() scales mouse events into logical coordinates.
+    // Treat the incoming coordinates as already-logical and only reject out-of-bounds clicks.
+    int logicalW = logicalSize;
+    int logicalH = logicalSize;
+    if (renderer != nullptr) {
+        int w = 0;
+        int h = 0;
+        SDL_RenderGetLogicalSize(renderer, &w, &h);
+        if (w > 0 && h > 0) {
+            logicalW = w;
+            logicalH = h;
+        }
+    }
+
+    if (x < 0 || y < 0 || x >= logicalW || y >= logicalH) {
+        return SDL_Point{-1, -1};
+    }
+
+    return SDL_Point{x, y};
+}
+
+void Game::logClickDebug(const char* phase, int windowX, int windowY, const SDL_Point &logical, int squareX, int squareY) const
+{
+    if (!debugClicks || renderer == nullptr || window == nullptr) {
+        return;
+    }
+
+    int windowW = 0;
+    int windowH = 0;
+    SDL_GetWindowSize(window, &windowW, &windowH);
+
+    int outputW = 0;
+    int outputH = 0;
+    SDL_GetRendererOutputSize(renderer, &outputW, &outputH);
+
+    SDL_Rect viewport{};
+    SDL_RenderGetViewport(renderer, &viewport);
+
+    float scaleX = 0.0f;
+    float scaleY = 0.0f;
+    SDL_RenderGetScale(renderer, &scaleX, &scaleY);
+
+    int logicalW = 0;
+    int logicalH = 0;
+    SDL_RenderGetLogicalSize(renderer, &logicalW, &logicalH);
+
+    const float logicalWf = static_cast<float>(logicalSize);
+    const float logicalHf = static_cast<float>(logicalSize);
+    const float outScaleX = outputW > 0 ? static_cast<float>(outputW) / logicalWf : 1.0f;
+    const float outScaleY = outputH > 0 ? static_cast<float>(outputH) / logicalHf : 1.0f;
+    const float outScale = std::min(outScaleX, outScaleY);
+    const float outViewportW = logicalWf * outScale;
+    const float outViewportH = logicalHf * outScale;
+    const float outViewportX = (static_cast<float>(outputW) - outViewportW) * 0.5f;
+    const float outViewportY = (static_cast<float>(outputH) - outViewportH) * 0.5f;
+
+    const bool squareValid = squareX >= 0 && squareX < 8 && squareY >= 0 && squareY < 8;
+    const Piece* centerPiece = squareValid ? board.getPiece(squareX, squareY) : nullptr;
+    const Piece* rightPiece = (squareValid && squareX + 1 < 8) ? board.getPiece(squareX + 1, squareY) : nullptr;
+    const Piece* leftPiece = (squareValid && squareX - 1 >= 0) ? board.getPiece(squareX - 1, squareY) : nullptr;
+
+    constexpr int tileSize = logicalSize / 8;
+    const int tileOriginX = squareValid ? squareX * tileSize : -1;
+    const int tileOriginY = squareValid ? squareY * tileSize : -1;
+
+    std::cerr
+        << "[click:" << phase << "] "
+        << "win=(" << windowX << "," << windowY << ") "
+        << "logical=(" << logical.x << "," << logical.y << ") "
+        << "square=(" << squareX << "," << squareY << ") "
+        << "tileOrigin=(" << tileOriginX << "," << tileOriginY << ") "
+        << "windowSize=(" << windowW << "x" << windowH << ") "
+        << "outputSize=(" << outputW << "x" << outputH << ") "
+        << "logicalSize=(" << logicalW << "x" << logicalH << ") "
+        << "viewport=(" << viewport.x << "," << viewport.y << "," << viewport.w << "," << viewport.h << ") "
+        << "scale=(" << scaleX << "," << scaleY << ") "
+        << "computedOutputViewport=("
+        << outViewportX << "," << outViewportY << "," << outViewportW << "," << outViewportH << ") "
+        << "computedOutputScale=" << outScale << " "
+        << "pieces{left=" << describePiece(leftPiece)
+        << ", center=" << describePiece(centerPiece)
+        << ", right=" << describePiece(rightPiece) << "}"
+        << '\n';
+}
+
+void Game::enforceSquareWindow(int newWidth, int newHeight)
+{
+    const int newSize = std::max(1, std::min(newWidth, newHeight));
+    if (static_cast<int>(windowSize) != newSize) {
+        windowSize = static_cast<unsigned int>(newSize);
+        SDL_SetWindowSize(window, newSize, newSize);
+        // Re-apply logical sizing to ensure the viewport stays in sync.
+        if (renderer != nullptr) {
+            SDL_RenderSetLogicalSize(renderer, logicalSize, logicalSize);
+        }
+    }
+
+    // Synchronize with the actual window size (e.g., on high-DPI displays).
+    int actualW = 0;
+    int actualH = 0;
+    SDL_GetWindowSize(window, &actualW, &actualH);
+    windowSize = static_cast<unsigned int>(std::max(1, std::min(actualW, actualH)));
 }
 
 void Game::aiTurn()
@@ -64,26 +293,35 @@ void Game::aiTurn()
 void Game::play()
 {
     drawUi();
-    while (window.isOpen()) {
-        sf::Event event;
-        while (window.pollEvent(event)) {
-            // Close window: exit
-            if (event.type == sf::Event::Closed) {
-                window.close();
+
+    bool running = window != nullptr && renderer != nullptr;
+    while (running) {
+        SDL_Event event;
+        while (SDL_PollEvent(&event) != 0) {
+            if (event.type == SDL_QUIT) {
+                running = false;
             }
-            else if (event.type == sf::Event::MouseButtonPressed) {
-                // X and Y coordinates of the grid where the mouse is clicked
-                const int xCord = event.mouseButton.x / (windowSize / 8);
-                const int yCord = event.mouseButton.y / (windowSize / 8);
+            else if (event.type == SDL_MOUSEMOTION) {
+                lastMouseLogical = windowToLogical(event.motion.x, event.motion.y);
+            }
+            else if (event.type == SDL_MOUSEBUTTONDOWN) {
+                const SDL_Point mouse = windowToLogical(event.button.x, event.button.y);
+                lastMouseLogical = mouse;
+                if (mouse.x < 0 || mouse.y < 0) {
+                    logClickDebug("down-outside", event.button.x, event.button.y, mouse, -1, -1);
+                    continue;
+                }
+                const int xCord = mouse.x / (logicalSize / 8);
+                const int yCord = mouse.y / (logicalSize / 8);
+                logClickDebug("down", event.button.x, event.button.y, mouse, xCord, yCord);
+
                 if (xCord < 8 && xCord > -1 && yCord < 8 && yCord > -1) {
-                    if (board.getPiece(xCord, yCord) && board.getPiece(xCord, yCord)->isWhite() == board.isWhiteTurn()) {
-                        //Finds piece that the mouse is over when it clicks
-                        heldPiece = board.getPiece(xCord, yCord);
+                    const Piece* clickedPiece = board.getPiece(xCord, yCord);
+                    if (clickedPiece != nullptr && clickedPiece->isWhite() == board.isWhiteTurn()) {
+                        heldPiece = clickedPiece;
                     }
                     else if (recentPiece != nullptr) {
-                        //This runs if a piece is already selected and wants to move to the space
-                        auto attemptedMove = Move(recentPiece, board.getPiece(xCord, yCord), recentPiece->getX(), recentPiece->getY(),
-                                                  xCord, yCord);
+                        auto attemptedMove = Move(recentPiece, board.getPiece(xCord, yCord), recentPiece->getX(), recentPiece->getY(), xCord, yCord);
 
                         if (canMove(attemptedMove) && recentPiece->isWhite() == board.isWhiteTurn()) {
                             board.makeMove(attemptedMove);
@@ -95,14 +333,20 @@ void Game::play()
                     }
                 }
             }
-            else if (event.type == sf::Event::MouseButtonReleased && heldPiece) {
-                // X and Y coordinate of the grid where the mouse is clicked
-                const int xCord = event.mouseButton.x / (windowSize / 8);
-                const int yCord = event.mouseButton.y / (windowSize / 8);
+            else if (event.type == SDL_MOUSEBUTTONUP && heldPiece != nullptr) {
+                const SDL_Point mouse = windowToLogical(event.button.x, event.button.y);
+                lastMouseLogical = mouse;
+                if (mouse.x < 0 || mouse.y < 0) {
+                    logClickDebug("up-outside", event.button.x, event.button.y, mouse, -1, -1);
+                    heldPiece = nullptr;
+                    continue;
+                }
+                const int xCord = mouse.x / (logicalSize / 8);
+                const int yCord = mouse.y / (logicalSize / 8);
+                logClickDebug("up", event.button.x, event.button.y, mouse, xCord, yCord);
 
                 if (xCord < 8 && xCord > -1 && yCord < 8 && yCord > -1) {
                     if (heldPiece == recentPiece) {
-                        //If a piece has been clicked twice deselect it
                         recentPiece = nullptr;
                     }
                     else {
@@ -121,173 +365,291 @@ void Game::play()
                 }
                 heldPiece = nullptr;
             }
-            else if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::D) {
+            else if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_d) {
                 if (!playedMoves.empty()) {
-                    board.unmakeMove(playedMoves[playedMoves.size() - 1]);
+                    board.unmakeMove(playedMoves.back());
                     playedMoves.pop_back();
                     board.changeTurn();
                     getMoves();
                 }
                 if (!playedMoves.empty()) {
-                    board.unmakeMove(playedMoves[playedMoves.size() - 1]);
+                    board.unmakeMove(playedMoves.back());
                     playedMoves.pop_back();
                     board.changeTurn();
                     getMoves();
                 }
                 gameOver = false;
             }
-            else if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::R) {
+            else if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_r) {
                 reset();
             }
-            else if (event.type == sf::Event::Resized) {
-                // Makes sure the window is always a square
-                if (window.getSize().x != windowSize) {
-                    windowSize = window.getSize().x;
-                    window.setSize(sf::Vector2u(windowSize, windowSize));
-                }
-                else if (window.getSize().y != windowSize) {
-                    windowSize = window.getSize().y;
-                    window.setSize(sf::Vector2u(windowSize, windowSize));
-                }
+            else if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_RESIZED) {
+                enforceSquareWindow(event.window.data1, event.window.data2);
             }
-            else if (event.type == sf::Event::KeyPressed && event.key.code == sf::Keyboard::A) {
+            else if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_a) {
                 aiStarted = !aiStarted;
             }
         }
+
         draw();
+
         if (board.isWhiteTurn() == aiIsWhite && aiStarted && !gameOver) {
             auto f = std::async(std::launch::async, &Game::aiTurn, this);
             basicWindowM(f);
         }
-        //std::cout << ai.evaluatePos() << '\n';
     }
 }
 
 void Game::drawLoop()
 {
     draw();
-    sf::Event event;
-    while (window.pollEvent(event)) {
-        // Close window: exit
-        if (event.type == sf::Event::Closed) {
-            window.close();
+    SDL_Event event;
+    while (SDL_PollEvent(&event) != 0) {
+        if (event.type == SDL_QUIT) {
+            SDL_DestroyWindow(window);
+            window = nullptr;
         }
+    }
+}
+
+void Game::drawYellowSquare(float x, float y)
+{
+    SDL_SetRenderDrawColor(renderer, yellowHighlightColor.r, yellowHighlightColor.g, yellowHighlightColor.b, yellowHighlightColor.a);
+    SDL_Rect rect{static_cast<int>(x), static_cast<int>(y), 100, 100};
+    SDL_RenderFillRect(renderer, &rect);
+}
+
+void Game::drawRedSquare(float x, float y)
+{
+    SDL_SetRenderDrawColor(renderer, redHighlightColor.r, redHighlightColor.g, redHighlightColor.b, redHighlightColor.a);
+    SDL_Rect rect{static_cast<int>(x), static_cast<int>(y), 100, 100};
+    SDL_RenderFillRect(renderer, &rect);
+}
+
+void Game::drawFilledCircle(int centerX, int centerY, int radius, const SDL_Color &color) const
+{
+    SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
+    for (int dy = -radius; dy <= radius; ++dy) {
+        const int dx = static_cast<int>(std::sqrt(radius * radius - dy * dy));
+        SDL_RenderDrawLine(renderer, centerX - dx, centerY + dy, centerX + dx, centerY + dy);
+    }
+}
+
+void Game::drawHighlightSquare(int x, int y, int size) const
+{
+    const int thickness = 5;
+
+    SDL_Rect fill{x, y, size, size};
+    SDL_SetRenderDrawColor(renderer, highlightFillColor.r, highlightFillColor.g, highlightFillColor.b, highlightFillColor.a);
+    SDL_RenderFillRect(renderer, &fill);
+
+    SDL_SetRenderDrawColor(renderer, outlineColor.r, outlineColor.g, outlineColor.b, outlineColor.a);
+    for (int i = 0; i < thickness; ++i) {
+        SDL_Rect r{x + i, y + i, size - i * 2, size - i * 2};
+        if (r.w > 0 && r.h > 0) {
+            SDL_RenderDrawRect(renderer, &r);
+        }
+    }
+}
+
+SDL_Point Game::measureText(const std::string &text) const
+{
+    SDL_Point size{0, 0};
+    if (!fontLoaded || text.empty()) {
+        return size;
+    }
+
+    int width = 0;
+    int prev = 0;
+    for (unsigned char ch : text) {
+        const int codepoint = static_cast<int>(ch);
+        if (prev != 0) {
+            width += static_cast<int>(stbtt_GetCodepointKernAdvance(&fontInfo, prev, codepoint) * fontScale);
+        }
+        int advance = 0;
+        int leftBearing = 0;
+        stbtt_GetCodepointHMetrics(&fontInfo, codepoint, &advance, &leftBearing);
+        width += static_cast<int>(advance * fontScale);
+        prev = codepoint;
+    }
+
+    const float height = static_cast<float>(fontAscent - fontDescent + fontLineGap) * fontScale;
+    size.x = width;
+    size.y = static_cast<int>(height);
+    return size;
+}
+
+void Game::drawText(const std::string &text, int x, int y, const SDL_Color &color) const
+{
+    if (!fontLoaded || renderer == nullptr || text.empty()) {
+        return;
+    }
+
+    int penX = x;
+    const int baseline = y + static_cast<int>(fontAscent * fontScale);
+    int prev = 0;
+
+    for (unsigned char ch : text) {
+        const int codepoint = static_cast<int>(ch);
+
+        if (prev != 0) {
+            penX += static_cast<int>(stbtt_GetCodepointKernAdvance(&fontInfo, prev, codepoint) * fontScale);
+        }
+
+        int advance = 0;
+        int leftBearing = 0;
+        stbtt_GetCodepointHMetrics(&fontInfo, codepoint, &advance, &leftBearing);
+
+        int w = 0;
+        int h = 0;
+        int xoff = 0;
+        int yoff = 0;
+        unsigned char* bitmap = stbtt_GetCodepointBitmap(&fontInfo, 0.0f, fontScale, codepoint, &w, &h, &xoff, &yoff);
+
+        if (bitmap != nullptr && w > 0 && h > 0) {
+            SDL_Surface* surface = SDL_CreateRGBSurfaceWithFormat(0, w, h, 32, SDL_PIXELFORMAT_RGBA32);
+            if (surface != nullptr) {
+                Uint32* pixels = static_cast<Uint32*>(surface->pixels);
+                const int pixelCount = w * h;
+                for (int i = 0; i < pixelCount; ++i) {
+                    const Uint8 alpha = static_cast<Uint8>((static_cast<int>(bitmap[i]) * color.a) / 255);
+                    pixels[i] = SDL_MapRGBA(surface->format, color.r, color.g, color.b, alpha);
+                }
+
+                SDL_Texture* texture = SDL_CreateTextureFromSurface(renderer, surface);
+                SDL_FreeSurface(surface);
+
+                if (texture != nullptr) {
+                    SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_BLEND);
+                    SDL_Rect dst{penX + xoff, baseline + yoff, w, h};
+                    SDL_RenderCopy(renderer, texture, nullptr, &dst);
+                    SDL_DestroyTexture(texture);
+                }
+            }
+            stbtt_FreeBitmap(bitmap, nullptr);
+        }
+
+        penX += static_cast<int>(advance * fontScale);
+        prev = codepoint;
     }
 }
 
 void Game::draw()
 {
-    window.clear(sf::Color(240, 217, 181));
+    if (renderer == nullptr) {
+        return;
+    }
 
-    constexpr float gSize = 100.0f;
-    brownSquare.setPosition(gSize, 0.0f);
+    SDL_SetRenderDrawColor(renderer, lightSquareColor.r, lightSquareColor.g, lightSquareColor.b, lightSquareColor.a);
+    SDL_RenderClear(renderer);
 
-    //Draws the grid tiles
-    for (int i = 0; i < 8; i++) {
-        for (int j = 0; j < 4; j++) {
-            window.draw(brownSquare);
-            brownSquare.move(gSize * 2, 0.0f);
-        }
-        if (i % 2 == 0) {
-            brownSquare.setPosition(0.0f, gSize * (i + 1));
-        }
-        else {
-            brownSquare.setPosition(gSize, gSize * (i + 1));
+    constexpr int boardSize = logicalSize;
+    constexpr int gSize = boardSize / 8;
+
+    for (int y = 0; y < 8; ++y) {
+        for (int x = 0; x < 8; ++x) {
+            const bool dark = (x + y) % 2 == 1;
+            const SDL_Color &color = dark ? darkSquareColor : lightSquareColor;
+            SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
+            SDL_Rect rect{x * gSize, y * gSize, gSize, gSize};
+            SDL_RenderFillRect(renderer, &rect);
         }
     }
 
-    //highlights old move
     if (!playedMoves.empty()) {
-        drawYellowSquare(gSize * playedMoves[playedMoves.size() - 1].getNewX(), gSize * playedMoves[playedMoves.size() - 1].getNewY());
-        drawYellowSquare(gSize * playedMoves[playedMoves.size() - 1].getOldX(), gSize * playedMoves[playedMoves.size() - 1].getOldY());
+        const Move &lastMove = playedMoves.back();
+        drawYellowSquare(static_cast<float>(gSize * lastMove.getNewX()), static_cast<float>(gSize * lastMove.getNewY()));
+        drawYellowSquare(static_cast<float>(gSize * lastMove.getOldX()), static_cast<float>(gSize * lastMove.getOldY()));
     }
 
-    //Highlights king in red if in check
     if (inCheck) {
-        for (const auto piece : board.isWhiteTurn() ? board.getWhitePieces() : board.getBlackPieces()) {
+        const auto &pieces = board.isWhiteTurn() ? board.getWhitePieces() : board.getBlackPieces();
+        for (const auto piece : pieces) {
             if (piece->getPieceType() == Piece::Type::King) {
-                drawRedSquare(piece->getX() * gSize, piece->getY() * gSize);
+                drawRedSquare(static_cast<float>(piece->getX() * gSize), static_cast<float>(piece->getY() * gSize));
             }
         }
     }
 
-    sf::Sprite heldSprite;
-    // Draws the pieces
-    for (int i = 0; i < 8; i++) {
-        for (int j = 0; j < 8; j++) {
-            if (board.getPiece(j, i) != nullptr) {
-                if (board.getPiece(j, i) == heldPiece && heldPiece != nullptr) {
-                    // This sets position of the held piece
-                    constexpr int offset = 50;
-                    heldSprite.setTexture(heldPiece->getTexture());
-                    heldSprite.setPosition(sf::Mouse::getPosition(window).x * 800.0f / windowSize - offset,
-                                           sf::Mouse::getPosition(window).y * 800.0f / windowSize - offset);
-                    drawYellowSquare(gSize * j, gSize * i);
+    SDL_Texture* heldTexture = nullptr;
+    SDL_Rect heldDst{0, 0, gSize, gSize};
+
+    for (int y = 0; y < 8; ++y) {
+        for (int x = 0; x < 8; ++x) {
+            const Piece* piece = board.getPiece(x, y);
+            if (piece == nullptr) {
+                continue;
+            }
+
+            if (piece == heldPiece && heldPiece != nullptr) {
+                const int offset = gSize / 2;
+                SDL_Point mouse = lastMouseLogical;
+                if (mouse.x < 0 || mouse.y < 0) {
+                    int mouseX = 0;
+                    int mouseY = 0;
+                    SDL_GetMouseState(&mouseX, &mouseY);
+                    mouse = windowToLogical(mouseX, mouseY);
                 }
-                else if (heldPiece == nullptr && board.getPiece(j, i) == recentPiece && recentPiece != nullptr) {
-                    drawYellowSquare(gSize * j, gSize * i);
-                    sf::Sprite s;
-                    s.setTexture(board.getPiece(j, i)->getTexture());
-                    s.setPosition(gSize * j, gSize * i);
-                    window.draw(s);
-                }
-                else {
-                    sf::Sprite s;
-                    s.setTexture(board.getPiece(j, i)->getTexture());
-                    s.setPosition(gSize * j, gSize * i);
-                    window.draw(s);
-                }
+                heldTexture = heldPiece->getTexture();
+                heldDst.x = mouse.x - offset;
+                heldDst.y = mouse.y - offset;
+                drawYellowSquare(static_cast<float>(gSize * x), static_cast<float>(gSize * y));
+                continue;
+            }
+
+            if (heldPiece == nullptr && piece == recentPiece && recentPiece != nullptr) {
+                drawYellowSquare(static_cast<float>(gSize * x), static_cast<float>(gSize * y));
+            }
+
+            SDL_Texture* texture = piece->getTexture();
+            if (texture != nullptr) {
+                SDL_Rect dst{x * gSize, y * gSize, gSize, gSize};
+                SDL_RenderCopy(renderer, texture, nullptr, &dst);
             }
         }
     }
 
-    //draws the piece hints
     const std::vector<Move> &playerMoves = board.isWhiteTurn() ? whiteMoves : blackMoves;
-    if (heldPiece) {
+    if (heldPiece != nullptr) {
         for (const auto &m : playerMoves) {
             if (m.getMovingPiece() == heldPiece) {
-                moveHint.setPosition((m.getNewX() + 0.5f) * gSize, (m.getNewY() + 0.5f) * gSize);
-                window.draw(moveHint);
+                const int centerX = static_cast<int>((m.getNewX() + 0.5f) * gSize);
+                const int centerY = static_cast<int>((m.getNewY() + 0.5f) * gSize);
+                drawFilledCircle(centerX, centerY, 15, moveHintColor);
             }
         }
     }
-    else if (recentPiece) {
+    else if (recentPiece != nullptr) {
         for (const auto &m : playerMoves) {
             if (m.getMovingPiece() == recentPiece) {
-                moveHint.setPosition((m.getNewX() + 0.5f) * gSize, (m.getNewY() + 0.5f) * gSize);
-                window.draw(moveHint);
+                const int centerX = static_cast<int>((m.getNewX() + 0.5f) * gSize);
+                const int centerY = static_cast<int>((m.getNewY() + 0.5f) * gSize);
+                drawFilledCircle(centerX, centerY, 15, moveHintColor);
             }
         }
     }
 
-    //Draws a box around highlighted piece
-    if (heldPiece) {
-        constexpr int offset = 5;
-        const int mouseX = sf::Mouse::getPosition(window).x * 800 / windowSize;
-        const int mouseY = sf::Mouse::getPosition(window).y * 800 / windowSize;
-        //Conversion rounds Mouse to nearest box
-        const int xCord = mouseX / static_cast<int>(gSize) * gSize + offset;// NOLINT
-        const int yCord = mouseY / static_cast<int>(gSize) * gSize + offset;// NOLINT
+    if (heldPiece != nullptr) {
+        SDL_Point mouse = lastMouseLogical;
+        if (mouse.x < 0 || mouse.y < 0) {
+            int mouseX = 0;
+            int mouseY = 0;
+            SDL_GetMouseState(&mouseX, &mouseY);
+            mouse = windowToLogical(mouseX, mouseY);
+        }
 
-        highlightSquare.setPosition(xCord, yCord);
-        window.draw(highlightSquare);
+        if (mouse.x >= 0 && mouse.y >= 0) {
+            const int xCord = mouse.x / gSize * gSize;
+            const int yCord = mouse.y / gSize * gSize;
+            drawHighlightSquare(xCord, yCord, gSize);
+        }
     }
 
-    // The held piece should be drawn over others
-    window.draw(heldSprite);
-    window.display();
-}
+    if (heldTexture != nullptr) {
+        SDL_RenderCopy(renderer, heldTexture, nullptr, &heldDst);
+    }
 
-void Game::drawYellowSquare(float x, float y)
-{
-    yellowSquare.setPosition(x, y);
-    window.draw(yellowSquare);
-}
-
-void Game::drawRedSquare(float x, float y)
-{
-    redSquare.setPosition(x, y);
-    window.draw(redSquare);
+    SDL_RenderPresent(renderer);
 }
 
 void Game::checkGameOver()
@@ -310,7 +672,6 @@ void Game::getMoves()
     std::vector<Move> &playerMoves = board.isWhiteTurn() ? whiteMoves : blackMoves;
     const std::vector<const Piece *> &playerPieces = board.isWhiteTurn() ? board.getWhitePieces() : board.getBlackPieces();
 
-    //gets pseudo legal moves
     playerMoves.clear();
     for (const auto piece : playerPieces) {
         if (!piece->isDead()) {
@@ -319,19 +680,16 @@ void Game::getMoves()
     }
 
     const King* king = nullptr;
-
     for (const auto piece : playerPieces) {
         if (piece->getPieceType() == Piece::Type::King) {
             king = dynamic_cast<const King *>(piece);
         }
     }
 
-    //This lambda plays all possible moves and then checks if they cause the king to be in check
-    //These moves are removed from the list
     const auto it = std::remove_if(playerMoves.begin(), playerMoves.end(), [this, &king](const Move &m)
     {
         board.makeMove(m);
-        if (king->inCheck(board)) {
+        if (king != nullptr && king->inCheck(board)) {
             board.unmakeMove(m);
             return true;
         }
@@ -341,19 +699,13 @@ void Game::getMoves()
 
     playerMoves.erase(it, playerMoves.end());
 
-    /*std::cout << "Possible moves for " << (board.isWhiteTurn() ? "White" : "Black") << ":\n";
-
-
-    for (const Move &a : playerMoves) {
-
-        std::cout << a.getMovingPiece()->getPieceType() << " from " << a.getOldX() << " " << 7 - a.getOldY() << " to " << a.getNewX() << " " << 7 - a.getNewY() << '\n';
-    }
-    std::cout << "\n\n\n";*/
-
-    //Checks if the current player is in check
-    for (const auto piece : board.isWhiteTurn() ? board.getWhitePieces() : board.getBlackPieces()) {
-        if (piece->getPieceType() == Piece::Type::King && dynamic_cast<const King *>(piece)->inCheck(board)) {
-            inCheck = true;
+    const auto &pieces = board.isWhiteTurn() ? board.getWhitePieces() : board.getBlackPieces();
+    for (const auto piece : pieces) {
+        if (piece->getPieceType() == Piece::Type::King) {
+            const auto *k = dynamic_cast<const King *>(piece);
+            if (k != nullptr && k->inCheck(board)) {
+                inCheck = true;
+            }
         }
     }
 
@@ -366,7 +718,6 @@ bool Game::canMove(Move &m) const
 
     for (const Move &move : possibleMoves) {
         if (m == move) {
-            //This will add the necessary settings to the move
             if (move.getMoveType() == Move::MoveType::Castle || move.getMoveType() == Move::MoveType::Promotion) {
                 m = move;
             }
@@ -395,24 +746,15 @@ void Game::reset()
 
 void Game::basicWindowM(std::future<void> &f)
 {
-    //This keeps the window responding while ai is searching for moves
     while (f.wait_for(std::chrono::seconds(0)) != std::future_status::ready) {
-        sf::Event event;
-        while (window.pollEvent(event)) {
-            // Close window: exit
-            if (event.type == sf::Event::Closed) {
-                window.close();
+        SDL_Event event;
+        while (SDL_PollEvent(&event) != 0) {
+            if (event.type == SDL_QUIT) {
+                SDL_DestroyWindow(window);
+                window = nullptr;
             }
-            else if (event.type == sf::Event::Resized) {
-                // Makes sure the window is always a square
-                if (window.getSize().x != windowSize) {
-                    windowSize = window.getSize().x;
-                    window.setSize(sf::Vector2u(windowSize, windowSize));
-                }
-                else if (window.getSize().y != windowSize) {
-                    windowSize = window.getSize().y;
-                    window.setSize(sf::Vector2u(windowSize, windowSize));
-                }
+            else if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_RESIZED) {
+                enforceSquareWindow(event.window.data1, event.window.data2);
             }
         }
     }
@@ -420,63 +762,36 @@ void Game::basicWindowM(std::future<void> &f)
 
 void Game::drawUi()
 {
-    Button aiWhite(sf::Color(240, 217, 181), windowSize / 2 - 200 / 2, 100, 200, 100);
-    Button aiBlack(sf::Color(181, 136, 99), windowSize / 2 - 200 / 2, 300, 200, 100);
-    Button noAi(sf::Color::Black, windowSize / 2 - 200 / 2, 500, 200, 100);
+    const SDL_Color lightButton{240, 217, 181, 255};
+    const SDL_Color darkButton{181, 136, 99, 255};
+    const SDL_Color blackButton{0, 0, 0, 255};
 
-    sf::Text chooseColor;
-    chooseColor.setFont(font);
-    chooseColor.setString("Choose Ai Color");
-    chooseColor.setCharacterSize(32);
-    chooseColor.setFillColor(sf::Color::Black);
-    chooseColor.setStyle(sf::Text::Style::Regular);
-    chooseColor.setPosition(windowSize / 2 - chooseColor.getGlobalBounds().width / 2, windowSize/ 20);
-
-    sf::Text whiteText = chooseColor;
-    whiteText.setString("White");
-    whiteText.setPosition(windowSize / 2 - whiteText.getGlobalBounds().width / 2,
-                          aiWhite.getRect().getGlobalBounds().top + aiWhite.getRect().getGlobalBounds().height / 2 - whiteText.
-                          getGlobalBounds().height / 2);
-
-    sf::Text blackText = chooseColor;
-    blackText.setString("Black");
-    blackText.setPosition(windowSize/ 2 - blackText.getGlobalBounds().width / 2,
-                          aiBlack.getRect().getGlobalBounds().top + aiBlack.getRect().getGlobalBounds().height / 2 - blackText.
-                          getGlobalBounds().height / 2);
-
-    sf::Text noAiText = chooseColor;
-    noAiText.setFillColor(sf::Color::White);
-    noAiText.setString("No Ai ");
-    noAiText.setPosition(windowSize / 2 - noAiText.getGlobalBounds().width / 2,
-                         noAi.getRect().getGlobalBounds().top + noAi.getRect().getGlobalBounds().height / 2 - noAiText.getGlobalBounds().
-                         height / 2);
+    Button aiWhite(lightButton, logicalSize / 2 - 100, 100, 200, 100);
+    Button aiBlack(darkButton, logicalSize / 2 - 100, 300, 200, 100);
+    Button noAi(blackButton, logicalSize / 2 - 100, 500, 200, 100);
 
     bool notClicked = true;
+    while (window != nullptr && notClicked) {
+        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
+        SDL_RenderClear(renderer);
 
-    while (window.isOpen() && notClicked) {
-        window.clear(sf::Color::White);
-        sf::Event event;
+        SDL_Event event;
+        while (SDL_PollEvent(&event) != 0) {
+            int mouseX = 0;
+            int mouseY = 0;
+            SDL_GetMouseState(&mouseX, &mouseY);
+            const SDL_Point mouse = windowToLogical(mouseX, mouseY);
+            mouseX = mouse.x;
+            mouseY = mouse.y;
 
-
-        while (window.pollEvent(event)) {
-            // Close window: exit
-            const int mouseX = sf::Mouse::getPosition(window).x * 800 / windowSize;
-            const int mouseY = sf::Mouse::getPosition(window).y * 800 / windowSize;
-            if (event.type == sf::Event::Closed) {
-                window.close();
+            if (event.type == SDL_QUIT) {
+                SDL_DestroyWindow(window);
+                window = nullptr;
             }
-            else if (event.type == sf::Event::Resized) {
-                // Makes sure the window is always a square
-                if (window.getSize().x != windowSize) {
-                    windowSize = window.getSize().x;
-                    window.setSize(sf::Vector2u(windowSize, windowSize));
-                }
-                else if (window.getSize().y != windowSize) {
-                    windowSize = window.getSize().y;
-                    window.setSize(sf::Vector2u(windowSize, windowSize));
-                }
+            else if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_RESIZED) {
+                enforceSquareWindow(event.window.data1, event.window.data2);
             }
-            else if (event.type == sf::Event::MouseButtonPressed) {
+            else if (event.type == SDL_MOUSEBUTTONDOWN) {
                 if (aiWhite.mouseOver(mouseX, mouseY)) {
                     aiStarted = true;
                     aiIsWhite = true;
@@ -494,25 +809,75 @@ void Game::drawUi()
                 }
             }
         }
-        
-        const int mouseX = sf::Mouse::getPosition(window).x * 800 / windowSize;
-        const int mouseY = sf::Mouse::getPosition(window).y * 800 / windowSize;
 
-        if (aiWhite.mouseOver(mouseX, mouseY) || aiBlack.mouseOver(mouseX, mouseY) || noAi.mouseOver(mouseX, mouseY)) {
-            window.setMouseCursor(click);
+        int mouseX = 0;
+        int mouseY = 0;
+        SDL_GetMouseState(&mouseX, &mouseY);
+        const SDL_Point mouse = windowToLogical(mouseX, mouseY);
+        mouseX = mouse.x;
+        mouseY = mouse.y;
+
+        const bool hoverWhite = aiWhite.mouseOver(mouseX, mouseY);
+        const bool hoverBlack = aiBlack.mouseOver(mouseX, mouseY);
+        const bool hoverNoAi = noAi.mouseOver(mouseX, mouseY);
+
+        if (hoverWhite || hoverBlack || hoverNoAi) {
+            SDL_SetCursor(click != nullptr ? click : arrow);
         }
-        else if (std::abs(mouseX - static_cast<int>(windowSize) / 2) <= 370 && std::abs(mouseY - static_cast<int>(windowSize) / 2) <= 370) {
-            window.setMouseCursor(arrow);
+        else {
+            SDL_SetCursor(arrow);
         }
 
-        aiWhite.draw(window);
-        aiBlack.draw(window);
-        noAi.draw(window);
-        window.draw(chooseColor);
-        window.draw(whiteText);
-        window.draw(blackText);
-        window.draw(noAiText);
-        window.display();
+        aiWhite.draw(renderer);
+        aiBlack.draw(renderer);
+        noAi.draw(renderer);
+
+        const SDL_Color textBlack{0, 0, 0, 255};
+        const SDL_Color textWhite{255, 255, 255, 255};
+
+        const std::string chooseText = "Choose Ai Color";
+        const SDL_Point chooseSize = measureText(chooseText);
+        const int chooseX = logicalSize / 2 - chooseSize.x / 2;
+        const int chooseY = logicalSize / 20;
+        drawText(chooseText, chooseX, chooseY, textBlack);
+
+        const std::string whiteText = "White";
+        const SDL_Point whiteSize = measureText(whiteText);
+        const SDL_Rect whiteRect = aiWhite.getRect();
+        const int whiteX = whiteRect.x + whiteRect.w / 2 - whiteSize.x / 2;
+        const int whiteY = whiteRect.y + whiteRect.h / 2 - whiteSize.y / 2;
+        drawText(whiteText, whiteX, whiteY, textBlack);
+
+        const std::string blackText = "Black";
+        const SDL_Point blackSize = measureText(blackText);
+        const SDL_Rect blackRect = aiBlack.getRect();
+        const int blackX = blackRect.x + blackRect.w / 2 - blackSize.x / 2;
+        const int blackY = blackRect.y + blackRect.h / 2 - blackSize.y / 2;
+        drawText(blackText, blackX, blackY, textBlack);
+
+        const std::string noAiText = "No Ai";
+        const SDL_Point noAiSize = measureText(noAiText);
+        const SDL_Rect noAiRect = noAi.getRect();
+        const int noAiX = noAiRect.x + noAiRect.w / 2 - noAiSize.x / 2;
+        const int noAiY = noAiRect.y + noAiRect.h / 2 - noAiSize.y / 2;
+        drawText(noAiText, noAiX, noAiY, textWhite);
+
+        SDL_SetRenderDrawColor(renderer, 255, 255, 255, 220);
+        if (hoverWhite) {
+            SDL_Rect r = aiWhite.getRect();
+            SDL_RenderDrawRect(renderer, &r);
+        }
+        if (hoverBlack) {
+            SDL_Rect r = aiBlack.getRect();
+            SDL_RenderDrawRect(renderer, &r);
+        }
+        if (hoverNoAi) {
+            SDL_Rect r = noAi.getRect();
+            SDL_RenderDrawRect(renderer, &r);
+        }
+
+        SDL_RenderPresent(renderer);
     }
-    window.setMouseCursor(arrow);
+
+    SDL_SetCursor(arrow);
 }

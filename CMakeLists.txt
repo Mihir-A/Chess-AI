@@ -12,21 +12,30 @@ set(CMAKE_CXX_FLAGS_RELEASE "-O2 -DNDEBUG" CACHE STRING "Release C++ flags" FORC
 # Use modern CMake for include directories
 set(INCLUDE_DIR ${CMAKE_SOURCE_DIR}/include)
 
-include(FetchContent)
+option(CHESS_VENDORED_SDL2 "Build SDL2 from source via FetchContent" ON)
 
-set(SFML_BUILD_NETWORK OFF CACHE BOOL "" FORCE)
-set(SFML_BUILD_AUDIO OFF CACHE BOOL "" FORCE)
-set(SFML_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
-set(SFML_BUILD_DOC OFF CACHE BOOL "" FORCE)
-set(SFML_BUILD_TEST_SUITE OFF CACHE BOOL "" FORCE)
+if(CHESS_VENDORED_SDL2)
+    include(FetchContent)
 
-FetchContent_Declare(
-    SFML
-    GIT_REPOSITORY https://github.com/SFML/SFML.git
-    GIT_TAG 2.6.1
-)
+    # Keep the SDL build minimal and self-contained.
+    set(SDL_SHARED OFF CACHE BOOL "" FORCE)
+    set(SDL_STATIC ON CACHE BOOL "" FORCE)
+    set(SDL_TEST OFF CACHE BOOL "" FORCE)
+    set(SDL2_DISABLE_INSTALL ON CACHE BOOL "" FORCE)
 
-FetchContent_MakeAvailable(SFML)
+    FetchContent_Declare(
+        SDL2
+        GIT_REPOSITORY https://github.com/libsdl-org/SDL.git
+        GIT_TAG SDL2
+        GIT_SHALLOW TRUE
+    )
+
+    FetchContent_MakeAvailable(SDL2)
+else()
+    # Fallback to a system SDL2 if the user prefers it.
+    find_package(SDL2 REQUIRED CONFIG REQUIRED COMPONENTS SDL2)
+    find_package(SDL2 REQUIRED CONFIG COMPONENTS SDL2main)
+endif()
 
 
 # Collect all .cpp files from src/
@@ -35,7 +44,20 @@ file(GLOB SOURCES "src/*.cpp")
 # Define the executables
 add_executable(${PROJECT_NAME} ${SOURCES})
 target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_23)
-target_link_libraries(${PROJECT_NAME} PRIVATE sfml-graphics)
+
+# SDL2main may be required on some platforms (e.g., Windows GUI apps).
+if(TARGET SDL2::SDL2main)
+    # SDL2main must appear before SDL2 on the link line.
+    target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2main)
+endif()
+
+if(TARGET SDL2::SDL2)
+    target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2)
+elseif(TARGET SDL2::SDL2-static)
+    target_link_libraries(${PROJECT_NAME} PRIVATE SDL2::SDL2-static)
+else()
+    message(FATAL_ERROR "SDL2 target not found. Disable CHESS_VENDORED_SDL2 or install SDL2.")
+endif()
 
 # Create output directories if they don't exist
 file(MAKE_DIRECTORY ${CMAKE_SOURCE_DIR}/build/debug)

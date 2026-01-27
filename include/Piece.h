@@ -1,8 +1,10 @@
 #pragma once
-#include "SFML/Graphics.hpp"
+
+#include <SDL.h>
 #include <string>
 #include <unordered_map>
 #include <vector>
+
 class Board;
 class Move;
 
@@ -21,11 +23,11 @@ public:
     void setKill(bool killed);
     void setIsWhite(bool w);
     bool isWhite() const;
-    const sf::Texture& getTexture() const;
+    SDL_Texture* getTexture() const;
     Type getPieceType() const;
     virtual void getPossibleMoves(std::vector<Move> &moves, const Board &b) const = 0;
     static bool onBoard(int p);
-    static void loadTextures();
+    static void loadTextures(SDL_Renderer* renderer);
     static void unloadTextures();
 
 protected:
@@ -36,6 +38,6 @@ protected:
     int y;
     bool dead;
     Type pieceType;
-    static std::unordered_map<std::string, sf::Texture *> textures;
+    static std::unordered_map<std::string, SDL_Texture*> textures;
     inline static bool texturesLoaded = false;
 };

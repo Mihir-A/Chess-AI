@@ -1,7 +1,9 @@
 # tool macros
 CXX ?= g++
-CFLAGS := -O2 -std=c++17 -L lib/ -lsfml-graphics -lsfml-window -lsfml-system -lpthread 
-COBJFLAGS := -O2 -std=c++17 -I include/ -c
+SDL2_CFLAGS := $(shell sdl2-config --cflags)
+SDL2_LIBS := $(shell sdl2-config --libs)
+CFLAGS := -O2 -std=c++23 $(SDL2_LIBS) -lpthread
+COBJFLAGS := -O2 -std=c++23 -I include/ $(SDL2_CFLAGS) -c
 
 # path macros
 BIN_PATH := ./

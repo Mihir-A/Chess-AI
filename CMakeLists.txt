@@ -1,4 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
+cmake_policy(SET CMP0069 NEW)
 
 project(chess)
 
@@ -29,6 +30,9 @@ if(MSVC)
 else()
     set(CMAKE_CXX_FLAGS_RELEASEEXTREMEOPTIMIZATION "-Ofast -DNDEBUG -flto -march=native -mtune=native -ffast-math -funroll-loops" CACHE STRING "ReleaseExtremeOptimization C++ flags" FORCE)
 endif()
+set(CMAKE_EXE_LINKER_FLAGS_RELEASEEXTREMEOPTIMIZATION "" CACHE STRING "ReleaseExtremeOptimization linker flags" FORCE)
+set(CMAKE_SHARED_LINKER_FLAGS_RELEASEEXTREMEOPTIMIZATION "" CACHE STRING "ReleaseExtremeOptimization shared linker flags" FORCE)
+set(CMAKE_MODULE_LINKER_FLAGS_RELEASEEXTREMEOPTIMIZATION "" CACHE STRING "ReleaseExtremeOptimization module linker flags" FORCE)
 set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASEEXTREMEOPTIMIZATION ON)
 
 

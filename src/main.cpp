@@ -1,5 +1,9 @@
 #include "Game.h"
 
+#if defined(_WIN32) && !defined(__EMSCRIPTEN__)
+#include <SDL.h>
+#endif
+
 #ifdef __EMSCRIPTEN__
 #include <emscripten/emscripten.h>
 

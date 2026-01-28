@@ -38,20 +38,15 @@
 ### Prerequisites
 
 * C++ compiler with C++23 support (VS 2022+ or modern gcc/clang recommended)
-* SDL2 available to your toolchain
   
 ### Installation
 
-1. Install SDL2
-   - macOS (Homebrew):
-     ```sh
-     brew install sdl2
-     ```
-2. Clone the repo
+1. Clone the repo
    ```sh
    git clone https://github.com/Mihir-A/Chess-AI.git
    cd Chess-AI
    ```
+   SDL2 is fetched automatically by CMake (no separate install needed).
 3. Build with CMake (recommended):
    ```sh
    cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
@@ -60,11 +55,23 @@
    The binary will be at `build/release/chess` on macOS/Linux or `build\\release\\chess.exe` on Windows.
 4. Run the binary, making sure the `assets` folder is in the same directory.
 
-   Alternative build options:
+## Running
+Make sure the `assets` folder sits next to the executable.
+
+### macOS (Gatekeeper warning)
+If macOS blocks the app (“not opened”), you can:
+1. Right‑click the `chess` binary → Open → Open.
+2. Or System Settings → Privacy & Security → “chess was blocked” → Open Anyway.
+3. Or clear quarantine in Terminal:
    ```sh
-   make all
+   xattr -d com.apple.quarantine /path/to/chess
    ```
-   Or use the Visual Studio solution (`Chess.sln`).
+
+### Windows
+Run `chess.exe` from the build output folder. If SmartScreen warns, choose “More info” → “Run anyway”.
+
+### Linux
+Run the `chess` binary from the build output folder. If needed, `chmod +x chess` first.
 
 ## Screenshots
 <p float="left">

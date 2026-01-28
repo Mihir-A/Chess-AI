@@ -23,6 +23,7 @@
 * Moves can be done by dragging a piece or clicking on a piece and then clicking the new square
 * Press R to resset game or D to undo a move
 * Toggle AI with A
+* Play online at https://mihirdev.com/chess to resume
 
 ## Features
 * Support for castling and auto promotion to queen

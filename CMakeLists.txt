@@ -6,7 +6,30 @@ set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-set(CMAKE_CXX_FLAGS_RELEASE "-O2 -DNDEBUG" CACHE STRING "Release C++ flags" FORCE)
+if(MSVC)
+    set(CMAKE_CXX_FLAGS_RELEASE "/O2 /DNDEBUG" CACHE STRING "Release C++ flags" FORCE)
+else()
+    set(CMAKE_CXX_FLAGS_RELEASE "-O3 -DNDEBUG" CACHE STRING "Release C++ flags" FORCE)
+endif()
+set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASE ON)
+
+# Optional "ReleaseExtremeOptimization" config (manual use only).
+set(CHESS_EXTREME_CONFIG "ReleaseExtremeOptimization")
+if(CMAKE_CONFIGURATION_TYPES)
+    list(FIND CMAKE_CONFIGURATION_TYPES "${CHESS_EXTREME_CONFIG}" _extreme_index)
+    if(_extreme_index EQUAL -1)
+        list(APPEND CMAKE_CONFIGURATION_TYPES "${CHESS_EXTREME_CONFIG}")
+        list(REMOVE_DUPLICATES CMAKE_CONFIGURATION_TYPES)
+        set(CMAKE_CONFIGURATION_TYPES "${CMAKE_CONFIGURATION_TYPES}" CACHE STRING "" FORCE)
+    endif()
+endif()
+
+if(MSVC)
+    set(CMAKE_CXX_FLAGS_RELEASEEXTREMEOPTIMIZATION "/O2 /Ot /GL /fp:fast /arch:AVX2 /DNDEBUG" CACHE STRING "ReleaseExtremeOptimization C++ flags" FORCE)
+else()
+    set(CMAKE_CXX_FLAGS_RELEASEEXTREMEOPTIMIZATION "-Ofast -DNDEBUG -flto -march=native -mtune=native -ffast-math -funroll-loops" CACHE STRING "ReleaseExtremeOptimization C++ flags" FORCE)
+endif()
+set(CMAKE_INTERPROCEDURAL_OPTIMIZATION_RELEASEEXTREMEOPTIMIZATION ON)
 
 
 # Use modern CMake for include directories
@@ -49,6 +72,8 @@ file(GLOB SOURCES "src/*.cpp")
 # Define the executables
 add_executable(${PROJECT_NAME} ${SOURCES})
 target_compile_features(${PROJECT_NAME} PRIVATE cxx_std_23)
+set_property(TARGET ${PROJECT_NAME} PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
+set_property(TARGET ${PROJECT_NAME} PROPERTY INTERPROCEDURAL_OPTIMIZATION_RELEASEEXTREMEOPTIMIZATION TRUE)
 
 if(EMSCRIPTEN)
     # Use SDL2 via Emscripten ports and bundle assets for runtime loading.

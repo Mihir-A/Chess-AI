@@ -1,0 +1,49 @@
+name: Build Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build-release:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [macos-latest, ubuntu-latest, windows-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure
+        run: cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+
+      - name: Build
+        run: cmake --build build --config Release -j 4
+
+      - name: Package (macOS/Linux)
+        if: runner.os != 'Windows'
+        run: |
+          mkdir -p dist/chess
+          cp -R assets dist/chess/
+          cp build/release/chess dist/chess/
+          cd dist
+          zip -r chess-${{ runner.os }}-release.zip chess
+
+      - name: Package (Windows)
+        if: runner.os == 'Windows'
+        shell: pwsh
+        run: |
+          New-Item -ItemType Directory -Force -Path dist/chess | Out-Null
+          Copy-Item -Recurse assets dist/chess/
+          Copy-Item build/release/chess.exe dist/chess/
+          Compress-Archive -Path dist/chess -DestinationPath dist/chess-Windows-release.zip
+
+      - name: Upload Release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/*.zip

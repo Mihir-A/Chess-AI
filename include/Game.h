@@ -39,6 +39,7 @@ private:
     void basicWindowM(std::future<void> &f);
     void drawUi();
     void enforceSquareWindow(int newWidth, int newHeight);
+    SDL_Point eventToLogical(int x, int y) const;
     SDL_Point windowToLogical(int x, int y) const;
     void logClickDebug(const char* phase, int windowX, int windowY, const SDL_Point &logical, int squareX, int squareY) const;
 

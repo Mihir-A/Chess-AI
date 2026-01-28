@@ -62,7 +62,7 @@ Game::Game()
       , menuActive(true)
       , click(nullptr)
       , arrow(nullptr)
-      , debugClicks(true)
+      , debugClicks(false)
       , lastMouseLogical{0, 0}
       , fontLoaded(false)
       , fontScale(1.0f)
@@ -179,8 +179,41 @@ Game::~Game()
 
 SDL_Point Game::windowToLogical(int x, int y) const
 {
-    // SDL_RenderSetLogicalSize() scales mouse events into logical coordinates.
-    // Treat the incoming coordinates as already-logical and only reject out-of-bounds clicks.
+    if (renderer == nullptr || window == nullptr) {
+        return SDL_Point{x, y};
+    }
+
+    int logicalW = logicalSize;
+    int logicalH = logicalSize;
+    int w = 0;
+    int h = 0;
+    SDL_RenderGetLogicalSize(renderer, &w, &h);
+    if (w > 0 && h > 0) {
+        logicalW = w;
+        logicalH = h;
+    }
+
+    int windowW = 0;
+    int windowH = 0;
+    SDL_GetWindowSize(window, &windowW, &windowH);
+    if (windowW <= 0 || windowH <= 0) {
+        return SDL_Point{-1, -1};
+    }
+
+    const float scaleX = static_cast<float>(logicalW) / static_cast<float>(windowW);
+    const float scaleY = static_cast<float>(logicalH) / static_cast<float>(windowH);
+    const float lx = static_cast<float>(x) * scaleX;
+    const float ly = static_cast<float>(y) * scaleY;
+
+    if (lx < 0.0f || ly < 0.0f || lx >= static_cast<float>(logicalW) || ly >= static_cast<float>(logicalH)) {
+        return SDL_Point{-1, -1};
+    }
+
+    return SDL_Point{static_cast<int>(std::floor(lx)), static_cast<int>(std::floor(ly))};
+}
+
+SDL_Point Game::eventToLogical(int x, int y) const
+{
     int logicalW = logicalSize;
     int logicalH = logicalSize;
     if (renderer != nullptr) {
@@ -330,10 +363,10 @@ bool Game::playFrame()
             running = false;
         }
         else if (event.type == SDL_MOUSEMOTION) {
-            lastMouseLogical = windowToLogical(event.motion.x, event.motion.y);
+            lastMouseLogical = eventToLogical(event.motion.x, event.motion.y);
         }
         else if (event.type == SDL_MOUSEBUTTONDOWN) {
-            const SDL_Point mouse = windowToLogical(event.button.x, event.button.y);
+            const SDL_Point mouse = eventToLogical(event.button.x, event.button.y);
             lastMouseLogical = mouse;
             if (mouse.x < 0 || mouse.y < 0) {
                 logClickDebug("down-outside", event.button.x, event.button.y, mouse, -1, -1);
@@ -362,7 +395,7 @@ bool Game::playFrame()
             }
         }
         else if (event.type == SDL_MOUSEBUTTONUP && heldPiece != nullptr) {
-            const SDL_Point mouse = windowToLogical(event.button.x, event.button.y);
+            const SDL_Point mouse = eventToLogical(event.button.x, event.button.y);
             lastMouseLogical = mouse;
             if (mouse.x < 0 || mouse.y < 0) {
                 logClickDebug("up-outside", event.button.x, event.button.y, mouse, -1, -1);
@@ -835,13 +868,6 @@ void Game::drawUiFrame()
 
     SDL_Event event;
     while (SDL_PollEvent(&event) != 0) {
-        int mouseX = 0;
-        int mouseY = 0;
-        SDL_GetMouseState(&mouseX, &mouseY);
-        const SDL_Point mouse = windowToLogical(mouseX, mouseY);
-        mouseX = mouse.x;
-        mouseY = mouse.y;
-
         if (event.type == SDL_QUIT) {
             SDL_DestroyWindow(window);
             window = nullptr;
@@ -849,31 +875,52 @@ void Game::drawUiFrame()
         else if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_RESIZED) {
             enforceSquareWindow(event.window.data1, event.window.data2);
         }
+        else if (event.type == SDL_MOUSEMOTION) {
+            lastMouseLogical = eventToLogical(event.motion.x, event.motion.y);
+        }
         else if (event.type == SDL_MOUSEBUTTONDOWN) {
-            if (aiWhite.mouseOver(mouseX, mouseY)) {
+            const SDL_Point click = eventToLogical(event.button.x, event.button.y);
+            lastMouseLogical = click;
+            logClickDebug("ui-down", event.button.x, event.button.y, click, -1, -1);
+            if (click.x >= 0 && click.y >= 0 && aiWhite.mouseOver(click.x, click.y)) {
+                if (debugClicks) {
+                    std::cout << "UI click: ai-white\n";
+                }
                 aiStarted = true;
                 aiIsWhite = true;
                 menuActive = false;
             }
-            else if (aiBlack.mouseOver(mouseX, mouseY)) {
+            else if (click.x >= 0 && click.y >= 0 && aiBlack.mouseOver(click.x, click.y)) {
+                if (debugClicks) {
+                    std::cout << "UI click: ai-black\n";
+                }
                 aiStarted = true;
                 aiIsWhite = false;
                 menuActive = false;
             }
-            else if (noAi.mouseOver(mouseX, mouseY)) {
+            else if (click.x >= 0 && click.y >= 0 && noAi.mouseOver(click.x, click.y)) {
+                if (debugClicks) {
+                    std::cout << "UI click: no-ai\n";
+                }
                 aiStarted = false;
                 aiIsWhite = false;
                 menuActive = false;
             }
+            else if (debugClicks) {
+                std::cout << "UI click: none\n";
+            }
         }
     }
 
-    int mouseX = 0;
-    int mouseY = 0;
-    SDL_GetMouseState(&mouseX, &mouseY);
-    const SDL_Point mouse = windowToLogical(mouseX, mouseY);
-    mouseX = mouse.x;
-    mouseY = mouse.y;
+    SDL_Point mouse = lastMouseLogical;
+    if (mouse.x < 0 || mouse.y < 0) {
+        int mouseX = 0;
+        int mouseY = 0;
+        SDL_GetMouseState(&mouseX, &mouseY);
+        mouse = windowToLogical(mouseX, mouseY);
+    }
+    const int mouseX = mouse.x;
+    const int mouseY = mouse.y;
 
     const bool hoverWhite = aiWhite.mouseOver(mouseX, mouseY);
     const bool hoverBlack = aiBlack.mouseOver(mouseX, mouseY);

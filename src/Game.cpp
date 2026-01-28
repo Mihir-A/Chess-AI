@@ -442,6 +442,11 @@ bool Game::playFrame()
             gameOver = false;
         }
         else if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_r) {
+#ifdef __EMSCRIPTEN__
+            if ((event.key.keysym.mod & (KMOD_CTRL | KMOD_GUI)) != 0) {
+                continue;
+            }
+#endif
             reset();
         }
         else if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_RESIZED) {
@@ -809,7 +814,13 @@ bool Game::canMove(Move &m) const
 
 void Game::reset()
 {
+#ifdef __EMSCRIPTEN__
+    menuActive = true;
+    aiStarted = false;
+    aiIsWhite = false;
+#else
     drawUi();
+#endif
     board.decipherFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
     gameOver = false;
     aiPending = false;

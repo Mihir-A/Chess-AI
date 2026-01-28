@@ -51,16 +51,19 @@
    git clone https://github.com/Mihir-A/Chess-AI.git
    cd Chess-AI
    ```
-3. Build using Make, CMake, or the Visual Studio Solution
-   ```sh
-   make all
-   ```
-   Or with CMake:
+3. Build with CMake (recommended):
    ```sh
    cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
    cmake --build build
    ```
-4. Run either chess.exe or chess depending on OS, making sure the assets folder is in the same directory
+   The binary will be at `build/release/chess` on macOS/Linux or `build\\release\\chess.exe` on Windows.
+4. Run the binary, making sure the `assets` folder is in the same directory.
+
+   Alternative build options:
+   ```sh
+   make all
+   ```
+   Or use the Visual Studio solution (`Chess.sln`).
 
 ## Screenshots
 <p float="left">

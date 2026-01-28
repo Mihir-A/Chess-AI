@@ -24,6 +24,18 @@ jobs:
       - name: Build
         run: cmake --build build --config Release -j 4
 
+      - name: Setup Emscripten (Linux only)
+        if: runner.os == 'Linux'
+        uses: mymindstorm/setup-emsdk@v14
+        with:
+          version: 3.1.64
+
+      - name: Build WASM (Linux only)
+        if: runner.os == 'Linux'
+        run: |
+          emcmake cmake -S . -B build-wasm -DCMAKE_BUILD_TYPE=Release
+          cmake --build build-wasm -j 4
+
       - name: Package (macOS/Linux)
         if: runner.os != 'Windows'
         run: |
@@ -32,6 +44,16 @@ jobs:
           cp build/release/chess dist/chess/
           cd dist
           zip -r chess-${{ runner.os }}-release.zip chess
+
+      - name: Package WASM (Linux only)
+        if: runner.os == 'Linux'
+        run: |
+          mkdir -p dist/chess-wasm
+          cp build/wasm/chess.js dist/chess-wasm/
+          cp build/wasm/chess.wasm dist/chess-wasm/
+          cp build/wasm/chess.data dist/chess-wasm/
+          cd dist
+          zip -r chess-wasm-release.zip chess-wasm
 
       - name: Package (Windows)
         if: runner.os == 'Windows'

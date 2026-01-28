@@ -21,9 +21,11 @@ void emscriptenTick(void* arg)
 #endif
 
 #ifdef __EMSCRIPTEN__
-int main()
+int main(int argc, char* argv[])
 {
     static Game game;
+    (void)argc;
+    (void)argv;
     emscripten_set_main_loop_arg(emscriptenTick, &game, 0, true);
     return 0;
 }
@@ -33,10 +35,12 @@ int main()
 
 int wWinMain(HINSTANCE hInstance, HINSTANCE hPreInst, LPWSTR lpCmdLine, int nCmdShow)
 #else
-int main()
+int main(int argc, char* argv[])
 #endif
 {
     Game game;
+    (void)argc;
+    (void)argv;
     game.play();
     return 0;
 }

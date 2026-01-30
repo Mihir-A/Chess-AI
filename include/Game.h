@@ -41,7 +41,10 @@ private:
     void enforceSquareWindow(int newWidth, int newHeight);
     SDL_Point eventToLogical(int x, int y) const;
     SDL_Point windowToLogical(int x, int y) const;
-    void logClickDebug(const char* phase, int windowX, int windowY, const SDL_Point &logical, int squareX, int squareY) const;
+    void logClickDebug(const char* phase, int windowX, int windowY, const SDL_Point &logical, int viewSquareX, int viewSquareY) const;
+    bool isBoardFlipped() const;
+    SDL_Point viewToBoardSquare(int viewX, int viewY) const;
+    SDL_Point boardToViewSquare(int boardX, int boardY) const;
 
     static constexpr int logicalSize = 800;
 

@@ -233,7 +233,28 @@ SDL_Point Game::eventToLogical(int x, int y) const
     return SDL_Point{x, y};
 }
 
-void Game::logClickDebug(const char* phase, int windowX, int windowY, const SDL_Point &logical, int squareX, int squareY) const
+bool Game::isBoardFlipped() const
+{
+    return aiIsWhite;
+}
+
+SDL_Point Game::viewToBoardSquare(int viewX, int viewY) const
+{
+    if (!isBoardFlipped()) {
+        return SDL_Point{viewX, viewY};
+    }
+    return SDL_Point{7 - viewX, 7 - viewY};
+}
+
+SDL_Point Game::boardToViewSquare(int boardX, int boardY) const
+{
+    if (!isBoardFlipped()) {
+        return SDL_Point{boardX, boardY};
+    }
+    return SDL_Point{7 - boardX, 7 - boardY};
+}
+
+void Game::logClickDebug(const char* phase, int windowX, int windowY, const SDL_Point &logical, int viewSquareX, int viewSquareY) const
 {
     if (!debugClicks || renderer == nullptr || window == nullptr) {
         return;
@@ -268,20 +289,23 @@ void Game::logClickDebug(const char* phase, int windowX, int windowY, const SDL_
     const float outViewportX = (static_cast<float>(outputW) - outViewportW) * 0.5f;
     const float outViewportY = (static_cast<float>(outputH) - outViewportH) * 0.5f;
 
-    const bool squareValid = squareX >= 0 && squareX < 8 && squareY >= 0 && squareY < 8;
-    const Piece* centerPiece = squareValid ? board.getPiece(squareX, squareY) : nullptr;
-    const Piece* rightPiece = (squareValid && squareX + 1 < 8) ? board.getPiece(squareX + 1, squareY) : nullptr;
-    const Piece* leftPiece = (squareValid && squareX - 1 >= 0) ? board.getPiece(squareX - 1, squareY) : nullptr;
+    const bool viewValid = viewSquareX >= 0 && viewSquareX < 8 && viewSquareY >= 0 && viewSquareY < 8;
+    const SDL_Point boardSquare = viewValid ? viewToBoardSquare(viewSquareX, viewSquareY) : SDL_Point{-1, -1};
+    const bool boardValid = boardSquare.x >= 0 && boardSquare.x < 8 && boardSquare.y >= 0 && boardSquare.y < 8;
+    const Piece* centerPiece = boardValid ? board.getPiece(boardSquare.x, boardSquare.y) : nullptr;
+    const Piece* rightPiece = (boardValid && boardSquare.x + 1 < 8) ? board.getPiece(boardSquare.x + 1, boardSquare.y) : nullptr;
+    const Piece* leftPiece = (boardValid && boardSquare.x - 1 >= 0) ? board.getPiece(boardSquare.x - 1, boardSquare.y) : nullptr;
 
     constexpr int tileSize = logicalSize / 8;
-    const int tileOriginX = squareValid ? squareX * tileSize : -1;
-    const int tileOriginY = squareValid ? squareY * tileSize : -1;
+    const int tileOriginX = viewValid ? viewSquareX * tileSize : -1;
+    const int tileOriginY = viewValid ? viewSquareY * tileSize : -1;
 
     std::cerr
         << "[click:" << phase << "] "
         << "win=(" << windowX << "," << windowY << ") "
         << "logical=(" << logical.x << "," << logical.y << ") "
-        << "square=(" << squareX << "," << squareY << ") "
+        << "square=(" << viewSquareX << "," << viewSquareY << ") "
+        << "board=(" << boardSquare.x << "," << boardSquare.y << ") "
         << "tileOrigin=(" << tileOriginX << "," << tileOriginY << ") "
         << "windowSize=(" << windowW << "x" << windowH << ") "
         << "outputSize=(" << outputW << "x" << outputH << ") "
@@ -372,9 +396,12 @@ bool Game::playFrame()
                 logClickDebug("down-outside", event.button.x, event.button.y, mouse, -1, -1);
                 continue;
             }
-            const int xCord = mouse.x / (logicalSize / 8);
-            const int yCord = mouse.y / (logicalSize / 8);
-            logClickDebug("down", event.button.x, event.button.y, mouse, xCord, yCord);
+            const int viewX = mouse.x / (logicalSize / 8);
+            const int viewY = mouse.y / (logicalSize / 8);
+            const SDL_Point boardSquare = viewToBoardSquare(viewX, viewY);
+            const int xCord = boardSquare.x;
+            const int yCord = boardSquare.y;
+            logClickDebug("down", event.button.x, event.button.y, mouse, viewX, viewY);
 
             if (xCord < 8 && xCord > -1 && yCord < 8 && yCord > -1) {
                 const Piece* clickedPiece = board.getPiece(xCord, yCord);
@@ -402,9 +429,12 @@ bool Game::playFrame()
                 heldPiece = nullptr;
                 continue;
             }
-            const int xCord = mouse.x / (logicalSize / 8);
-            const int yCord = mouse.y / (logicalSize / 8);
-            logClickDebug("up", event.button.x, event.button.y, mouse, xCord, yCord);
+            const int viewX = mouse.x / (logicalSize / 8);
+            const int viewY = mouse.y / (logicalSize / 8);
+            const SDL_Point boardSquare = viewToBoardSquare(viewX, viewY);
+            const int xCord = boardSquare.x;
+            const int yCord = boardSquare.y;
+            logClickDebug("up", event.button.x, event.button.y, mouse, viewX, viewY);
 
             if (xCord < 8 && xCord > -1 && yCord < 8 && yCord > -1) {
                 if (heldPiece == recentPiece) {
@@ -642,15 +672,18 @@ void Game::draw()
 
     if (!playedMoves.empty()) {
         const Move &lastMove = playedMoves.back();
-        drawYellowSquare(static_cast<float>(gSize * lastMove.getNewX()), static_cast<float>(gSize * lastMove.getNewY()));
-        drawYellowSquare(static_cast<float>(gSize * lastMove.getOldX()), static_cast<float>(gSize * lastMove.getOldY()));
+        const SDL_Point viewNew = boardToViewSquare(lastMove.getNewX(), lastMove.getNewY());
+        const SDL_Point viewOld = boardToViewSquare(lastMove.getOldX(), lastMove.getOldY());
+        drawYellowSquare(static_cast<float>(gSize * viewNew.x), static_cast<float>(gSize * viewNew.y));
+        drawYellowSquare(static_cast<float>(gSize * viewOld.x), static_cast<float>(gSize * viewOld.y));
     }
 
     if (inCheck) {
         const auto &pieces = board.isWhiteTurn() ? board.getWhitePieces() : board.getBlackPieces();
         for (const auto piece : pieces) {
             if (piece->getPieceType() == Piece::Type::King) {
-                drawRedSquare(static_cast<float>(piece->getX() * gSize), static_cast<float>(piece->getY() * gSize));
+                const SDL_Point viewKing = boardToViewSquare(piece->getX(), piece->getY());
+                drawRedSquare(static_cast<float>(viewKing.x * gSize), static_cast<float>(viewKing.y * gSize));
             }
         }
     }
@@ -658,9 +691,10 @@ void Game::draw()
     SDL_Texture* heldTexture = nullptr;
     SDL_Rect heldDst{0, 0, gSize, gSize};
 
-    for (int y = 0; y < 8; ++y) {
-        for (int x = 0; x < 8; ++x) {
-            const Piece* piece = board.getPiece(x, y);
+    for (int viewY = 0; viewY < 8; ++viewY) {
+        for (int viewX = 0; viewX < 8; ++viewX) {
+            const SDL_Point boardSquare = viewToBoardSquare(viewX, viewY);
+            const Piece* piece = board.getPiece(boardSquare.x, boardSquare.y);
             if (piece == nullptr) {
                 continue;
             }
@@ -674,20 +708,22 @@ void Game::draw()
                     SDL_GetMouseState(&mouseX, &mouseY);
                     mouse = windowToLogical(mouseX, mouseY);
                 }
-                heldTexture = heldPiece->getTexture();
-                heldDst.x = mouse.x - offset;
-                heldDst.y = mouse.y - offset;
-                drawYellowSquare(static_cast<float>(gSize * x), static_cast<float>(gSize * y));
+                if (mouse.x >= 0 && mouse.y >= 0) {
+                    heldTexture = heldPiece->getTexture();
+                    heldDst.x = mouse.x - offset;
+                    heldDst.y = mouse.y - offset;
+                    drawYellowSquare(static_cast<float>(gSize * viewX), static_cast<float>(gSize * viewY));
+                }
                 continue;
             }
 
             if (heldPiece == nullptr && piece == recentPiece && recentPiece != nullptr) {
-                drawYellowSquare(static_cast<float>(gSize * x), static_cast<float>(gSize * y));
+                drawYellowSquare(static_cast<float>(gSize * viewX), static_cast<float>(gSize * viewY));
             }
 
             SDL_Texture* texture = piece->getTexture();
             if (texture != nullptr) {
-                SDL_Rect dst{x * gSize, y * gSize, gSize, gSize};
+                SDL_Rect dst{viewX * gSize, viewY * gSize, gSize, gSize};
                 SDL_RenderCopy(renderer, texture, nullptr, &dst);
             }
         }
@@ -697,8 +733,9 @@ void Game::draw()
     if (heldPiece != nullptr) {
         for (const auto &m : playerMoves) {
             if (m.getMovingPiece() == heldPiece) {
-                const int centerX = static_cast<int>((m.getNewX() + 0.5f) * gSize);
-                const int centerY = static_cast<int>((m.getNewY() + 0.5f) * gSize);
+                const SDL_Point viewSquare = boardToViewSquare(m.getNewX(), m.getNewY());
+                const int centerX = static_cast<int>((viewSquare.x + 0.5f) * gSize);
+                const int centerY = static_cast<int>((viewSquare.y + 0.5f) * gSize);
                 drawFilledCircle(centerX, centerY, 15, moveHintColor);
             }
         }
@@ -706,8 +743,9 @@ void Game::draw()
     else if (recentPiece != nullptr) {
         for (const auto &m : playerMoves) {
             if (m.getMovingPiece() == recentPiece) {
-                const int centerX = static_cast<int>((m.getNewX() + 0.5f) * gSize);
-                const int centerY = static_cast<int>((m.getNewY() + 0.5f) * gSize);
+                const SDL_Point viewSquare = boardToViewSquare(m.getNewX(), m.getNewY());
+                const int centerX = static_cast<int>((viewSquare.x + 0.5f) * gSize);
+                const int centerY = static_cast<int>((viewSquare.y + 0.5f) * gSize);
                 drawFilledCircle(centerX, centerY, 15, moveHintColor);
             }
         }

@@ -55,6 +55,24 @@
    The binary will be at `build/release/chess` on macOS/Linux or `build\\release\\chess.exe` on Windows.
 4. Run the binary, making sure the `assets` folder is in the same directory.
 
+### WebAssembly (Emscripten)
+Use Emscripten to produce a browser build. Outputs go to `build/wasm`.
+
+1. Configure with `emcmake`:
+   ```sh
+   emcmake cmake -S . -B build -DCMAKE_BUILD_TYPE=Release
+   ```
+2. Build:
+   ```sh
+   cmake --build build
+   ```
+3. Open `build/wasm/chess.html` in a local web server.
+
+If you previously configured `build/` with a native toolchain, clear it before switching:
+```sh
+rm -rf build/CMakeCache.txt build/CMakeFiles
+```
+
 ## Running
 Make sure the `assets` folder sits next to the executable.
 

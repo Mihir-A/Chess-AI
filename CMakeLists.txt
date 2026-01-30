@@ -114,6 +114,7 @@ endif()
 # Create output directories if they don't exist
 file(MAKE_DIRECTORY ${CMAKE_SOURCE_DIR}/build/debug)
 file(MAKE_DIRECTORY ${CMAKE_SOURCE_DIR}/build/release)
+file(MAKE_DIRECTORY ${CMAKE_SOURCE_DIR}/build/wasm)
 
 # Use modern target_include_directories
 target_include_directories(${PROJECT_NAME} PRIVATE ${INCLUDE_DIR})

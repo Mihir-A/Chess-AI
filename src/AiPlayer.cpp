@@ -8,7 +8,7 @@ AiPlayer::AiPlayer(Board &gameBoard)
     : board(gameBoard)
 {}
 
-constexpr int searchDepth = 5;
+constexpr int searchDepth = 4;
 int searched = 0;
 int prunned = 0;
 

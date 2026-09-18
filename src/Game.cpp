@@ -351,12 +351,7 @@ void Game::aiTurn()
 
 void Game::play()
 {
-    menuActive = true;
-    drawUi();
-
-    bool running = window != nullptr && renderer != nullptr;
-    while (running) {
-        running = playFrame();
+    while (tick()) {
     }
 }
 
@@ -388,6 +383,15 @@ bool Game::playFrame()
         }
         else if (event.type == SDL_MOUSEMOTION) {
             lastMouseLogical = eventToLogical(event.motion.x, event.motion.y);
+        }
+        else if (gameOver && resultVisible && handleResultEvent(event)) {
+            // The result dialog owns input until dismissed.
+            if (menuActive) {
+                return true;
+            }
+        }
+        else if (gameOver && (event.type == SDL_MOUSEBUTTONDOWN || event.type == SDL_MOUSEBUTTONUP)) {
+            // Viewing the final position must not select or move pieces.
         }
         else if (event.type == SDL_MOUSEBUTTONDOWN) {
             const SDL_Point mouse = eventToLogical(event.button.x, event.button.y);
@@ -470,6 +474,7 @@ bool Game::playFrame()
                 getMoves();
             }
             gameOver = false;
+            resultVisible = false;
         }
         else if (event.type == SDL_KEYDOWN && event.key.keysym.sym == SDLK_r) {
 #ifdef __EMSCRIPTEN__
@@ -478,6 +483,7 @@ bool Game::playFrame()
             }
 #endif
             reset();
+            return true;
         }
         else if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_RESIZED) {
             enforceSquareWindow(event.window.data1, event.window.data2);
@@ -566,48 +572,56 @@ void Game::drawHighlightSquare(int x, int y, int size) const
     }
 }
 
-SDL_Point Game::measureText(const std::string &text) const
+SDL_Point Game::measureText(const std::string &text, float pixelHeight) const
 {
     SDL_Point size{0, 0};
     if (!fontLoaded || text.empty()) {
         return size;
     }
 
-    int width = 0;
+    const float textScale = stbtt_ScaleForPixelHeight(&fontInfo, pixelHeight);
+    float width = 0.0f;
     int prev = 0;
     for (unsigned char ch : text) {
         const int codepoint = static_cast<int>(ch);
         if (prev != 0) {
-            width += static_cast<int>(stbtt_GetCodepointKernAdvance(&fontInfo, prev, codepoint) * fontScale);
+            width += stbtt_GetCodepointKernAdvance(&fontInfo, prev, codepoint) * textScale;
         }
         int advance = 0;
         int leftBearing = 0;
         stbtt_GetCodepointHMetrics(&fontInfo, codepoint, &advance, &leftBearing);
-        width += static_cast<int>(advance * fontScale);
+        width += advance * textScale;
         prev = codepoint;
     }
 
-    const float height = static_cast<float>(fontAscent - fontDescent + fontLineGap) * fontScale;
-    size.x = width;
+    const float height = static_cast<float>(fontAscent - fontDescent + fontLineGap) * textScale;
+    size.x = static_cast<int>(std::ceil(width));
     size.y = static_cast<int>(height);
     return size;
 }
 
-void Game::drawText(const std::string &text, int x, int y, const SDL_Color &color) const
+void Game::drawText(const std::string &text, int x, int y, const SDL_Color &color, float pixelHeight) const
 {
     if (!fontLoaded || renderer == nullptr || text.empty()) {
         return;
     }
 
-    int penX = x;
-    const int baseline = y + static_cast<int>(fontAscent * fontScale);
+    const float textScale = stbtt_ScaleForPixelHeight(&fontInfo, pixelHeight);
+    float scaleX = 1.0f;
+    float scaleY = 1.0f;
+    SDL_RenderGetScale(renderer, &scaleX, &scaleY);
+    // Rasterize at display resolution, with 2x supersampling for smaller windows.
+    const float rasterScale = std::max(2.0f, std::max(scaleX, scaleY));
+    const float bitmapScale = textScale * rasterScale;
+    float penX = static_cast<float>(x);
+    const float baseline = y + fontAscent * textScale;
     int prev = 0;
 
     for (unsigned char ch : text) {
         const int codepoint = static_cast<int>(ch);
 
         if (prev != 0) {
-            penX += static_cast<int>(stbtt_GetCodepointKernAdvance(&fontInfo, prev, codepoint) * fontScale);
+            penX += stbtt_GetCodepointKernAdvance(&fontInfo, prev, codepoint) * textScale;
         }
 
         int advance = 0;
@@ -618,7 +632,7 @@ void Game::drawText(const std::string &text, int x, int y, const SDL_Color &colo
         int h = 0;
         int xoff = 0;
         int yoff = 0;
-        unsigned char* bitmap = stbtt_GetCodepointBitmap(&fontInfo, 0.0f, fontScale, codepoint, &w, &h, &xoff, &yoff);
+        unsigned char* bitmap = stbtt_GetCodepointBitmap(&fontInfo, 0.0f, bitmapScale, codepoint, &w, &h, &xoff, &yoff);
 
         if (bitmap != nullptr && w > 0 && h > 0) {
             SDL_Surface* surface = SDL_CreateRGBSurfaceWithFormat(0, w, h, 32, SDL_PIXELFORMAT_RGBA32);
@@ -635,15 +649,17 @@ void Game::drawText(const std::string &text, int x, int y, const SDL_Color &colo
 
                 if (texture != nullptr) {
                     SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_BLEND);
-                    SDL_Rect dst{penX + xoff, baseline + yoff, w, h};
-                    SDL_RenderCopy(renderer, texture, nullptr, &dst);
+                    SDL_SetTextureScaleMode(texture, SDL_ScaleModeLinear);
+                    const SDL_FRect dst{penX + xoff / rasterScale, baseline + yoff / rasterScale,
+                                        w / rasterScale, h / rasterScale};
+                    SDL_RenderCopyF(renderer, texture, nullptr, &dst);
                     SDL_DestroyTexture(texture);
                 }
             }
             stbtt_FreeBitmap(bitmap, nullptr);
         }
 
-        penX += static_cast<int>(advance * fontScale);
+        penX += advance * textScale;
         prev = codepoint;
     }
 }
@@ -771,21 +787,122 @@ void Game::draw()
         SDL_RenderCopy(renderer, heldTexture, nullptr, &heldDst);
     }
 
+    if (gameOver && resultVisible) {
+        drawGameResult();
+    }
     SDL_RenderPresent(renderer);
 }
 
 void Game::checkGameOver()
 {
     const std::vector<Move> &playerMoves = board.isWhiteTurn() ? whiteMoves : blackMoves;
-    if (playerMoves.empty()) {
-        if (inCheck) {
-            std::cout << (board.isWhiteTurn() ? "White" : "Black") << " is in checkmate";
+    const bool wasGameOver = gameOver;
+    gameOver = playerMoves.empty();
+    if (gameOver && !wasGameOver) {
+        resultVisible = true;
+        resultFocus = 0;
+        heldPiece = nullptr;
+        recentPiece = nullptr;
+    }
+    else if (!gameOver) {
+        resultVisible = false;
+    }
+}
+
+bool Game::handleResultEvent(const SDL_Event &event)
+{
+    const SDL_Rect newGame{204, 438, 184, 60};
+    const SDL_Rect viewBoard{412, 438, 184, 60};
+    const auto activate = [&](int choice) {
+        SDL_SetCursor(arrow);
+        if (choice == 0) {
+            reset();
         }
         else {
-            std::cout << (board.isWhiteTurn() ? "White" : "Black") << " is in stalemate";
+            resultVisible = false;
         }
-        gameOver = true;
+    };
+    if (event.type == SDL_MOUSEBUTTONDOWN) {
+        if (event.button.button == SDL_BUTTON_LEFT) {
+            const SDL_Point mouse = eventToLogical(event.button.x, event.button.y);
+            if (SDL_PointInRect(&mouse, &newGame)) {
+                activate(0);
+            }
+            else if (SDL_PointInRect(&mouse, &viewBoard)) {
+                activate(1);
+            }
+        }
+        return true;
     }
+    if (event.type == SDL_MOUSEBUTTONUP) {
+        return true;
+    }
+    if (event.type == SDL_KEYDOWN) {
+        if (event.key.repeat != 0) {
+            return true;
+        }
+        switch (event.key.keysym.sym) {
+        case SDLK_TAB:
+        case SDLK_LEFT:
+        case SDLK_RIGHT:
+            resultFocus = 1 - resultFocus;
+            return true;
+        case SDLK_RETURN:
+        case SDLK_KP_ENTER:
+        case SDLK_SPACE:
+            activate(resultFocus);
+            return true;
+        case SDLK_ESCAPE:
+            activate(1);
+            return true;
+        default:
+            break;
+        }
+    }
+    return false;
+}
+
+void Game::drawGameResult()
+{
+    SDL_SetRenderDrawColor(renderer, 20, 18, 16, 155);
+    SDL_Rect backdrop{0, 0, logicalSize, logicalSize};
+    SDL_RenderFillRect(renderer, &backdrop);
+    drawRoundedRect({164, 278, 472, 260}, 20, SDL_Color{43, 40, 36, 255});
+
+    const SDL_Color primary{248, 240, 227, 255};
+    const SDL_Color accent{225, 185, 125, 255};
+    const std::string title = inCheck ? "Checkmate" : "Stalemate";
+    const std::string result = inCheck ? (board.isWhiteTurn() ? "Black wins" : "White wins") : "Draw";
+    drawText(title, 400 - measureText(title, 44).x / 2, 310, primary, 44);
+    drawText(result, 400 - measureText(result, 28).x / 2, 372, accent, 28);
+
+    const SDL_Rect buttons[] = {{204, 438, 184, 60}, {412, 438, 184, 60}};
+    const char* labels[] = {"New Game", "View Board"};
+    bool hovering = false;
+    for (int i = 0; i < 2; ++i) {
+        const bool hovered = SDL_PointInRect(&lastMouseLogical, &buttons[i]);
+        hovering = hovering || hovered;
+        const bool focused = resultFocus == i || hovered;
+        drawRoundedRect(buttons[i], 12, focused ? accent : SDL_Color{78, 71, 61, 255});
+        SDL_Rect inside{buttons[i].x + 2, buttons[i].y + 2, buttons[i].w - 4, buttons[i].h - 4};
+        drawRoundedRect(inside, 10, SDL_Color{56, 52, 46, 255});
+        drawText(labels[i], buttons[i].x + (buttons[i].w - measureText(labels[i], 25).x) / 2,
+                 buttons[i].y + 17, primary, 25);
+    }
+    SDL_SetCursor(hovering && click != nullptr ? click : arrow);
+}
+
+void Game::drawRoundedRect(SDL_Rect rect, int radius, SDL_Color color) const
+{
+    SDL_SetRenderDrawColor(renderer, color.r, color.g, color.b, color.a);
+    SDL_Rect middle{rect.x + radius, rect.y, rect.w - 2 * radius, rect.h};
+    SDL_Rect cross{rect.x, rect.y + radius, rect.w, rect.h - 2 * radius};
+    SDL_RenderFillRect(renderer, &middle);
+    SDL_RenderFillRect(renderer, &cross);
+    drawFilledCircle(rect.x + radius, rect.y + radius, radius, color);
+    drawFilledCircle(rect.x + rect.w - radius - 1, rect.y + radius, radius, color);
+    drawFilledCircle(rect.x + radius, rect.y + rect.h - radius - 1, radius, color);
+    drawFilledCircle(rect.x + rect.w - radius - 1, rect.y + rect.h - radius - 1, radius, color);
 }
 
 void Game::getMoves()
@@ -852,13 +969,12 @@ bool Game::canMove(Move &m) const
 
 void Game::reset()
 {
-#ifdef __EMSCRIPTEN__
+    menuFocus = 0;
     menuActive = true;
     aiStarted = false;
     aiIsWhite = false;
-#else
-    drawUi();
-#endif
+    resultVisible = false;
+    resultFocus = 0;
     board.decipherFen("rnbqkbnr/pppppppp/8/8/8/8/PPPPPPPP/RNBQKBNR w KQkq - 0 1");
     gameOver = false;
     aiPending = false;
@@ -889,150 +1005,126 @@ void Game::basicWindowM(std::future<void> &f)
     }
 }
 
-void Game::drawUi()
-{
-    menuActive = true;
-    while (window != nullptr && menuActive) {
-        drawUiFrame();
-    }
-    SDL_SetCursor(arrow);
-}
-
 void Game::drawUiFrame()
 {
     if (window == nullptr || renderer == nullptr) {
         return;
     }
 
-    const SDL_Color lightButton{240, 217, 181, 255};
-    const SDL_Color darkButton{181, 136, 99, 255};
-    const SDL_Color blackButton{0, 0, 0, 255};
-
-    Button aiWhite(lightButton, logicalSize / 2 - 100, 100, 200, 100);
-    Button aiBlack(darkButton, logicalSize / 2 - 100, 300, 200, 100);
-    Button noAi(blackButton, logicalSize / 2 - 100, 500, 200, 100);
-
-    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-    SDL_RenderClear(renderer);
+    const SDL_Color background{29, 27, 25, 255};
+    const SDL_Color panel{43, 40, 36, 255};
+    const SDL_Color card{56, 52, 46, 255};
+    const SDL_Color activeCard{70, 62, 51, 255};
+    const SDL_Color accent{225, 185, 125, 255};
+    const SDL_Color primary{248, 240, 227, 255};
+    const Button options[] = {
+        Button(card, 152, 300, 236, 232),
+        Button(card, 412, 300, 236, 232),
+        Button(card, 152, 556, 496, 68)
+    };
+    const auto optionAt = [&](SDL_Point point) {
+        for (int i = 0; i < 3; ++i) {
+            if (options[i].mouseOver(point.x, point.y)) {
+                return i;
+            }
+        }
+        return -1;
+    };
+    const auto startGame = [&](int choice) {
+        aiStarted = choice != 2;
+        // The cards describe the player's side; the AI takes the opposite side.
+        aiIsWhite = choice == 1;
+        aiPending = false;
+        menuActive = false;
+        SDL_SetCursor(arrow);
+    };
 
     SDL_Event event;
     while (SDL_PollEvent(&event) != 0) {
         if (event.type == SDL_QUIT) {
             SDL_DestroyWindow(window);
             window = nullptr;
+            return;
         }
-        else if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_RESIZED) {
+        if (event.type == SDL_WINDOWEVENT && event.window.event == SDL_WINDOWEVENT_RESIZED) {
             enforceSquareWindow(event.window.data1, event.window.data2);
         }
         else if (event.type == SDL_MOUSEMOTION) {
             lastMouseLogical = eventToLogical(event.motion.x, event.motion.y);
+            const int hovered = optionAt(lastMouseLogical);
+            if (hovered >= 0) {
+                menuFocus = hovered;
+            }
         }
-        else if (event.type == SDL_MOUSEBUTTONDOWN) {
-            const SDL_Point click = eventToLogical(event.button.x, event.button.y);
-            lastMouseLogical = click;
-            logClickDebug("ui-down", event.button.x, event.button.y, click, -1, -1);
-            if (click.x >= 0 && click.y >= 0 && aiWhite.mouseOver(click.x, click.y)) {
-                if (debugClicks) {
-                    std::cout << "UI click: ai-white\n";
-                }
-                aiStarted = true;
-                aiIsWhite = true;
-                menuActive = false;
+        else if (event.type == SDL_MOUSEBUTTONDOWN && event.button.button == SDL_BUTTON_LEFT) {
+            lastMouseLogical = eventToLogical(event.button.x, event.button.y);
+            const int choice = optionAt(lastMouseLogical);
+            if (choice >= 0) {
+                startGame(choice);
+                return;
             }
-            else if (click.x >= 0 && click.y >= 0 && aiBlack.mouseOver(click.x, click.y)) {
-                if (debugClicks) {
-                    std::cout << "UI click: ai-black\n";
-                }
-                aiStarted = true;
-                aiIsWhite = false;
-                menuActive = false;
+        }
+        else if (event.type == SDL_KEYDOWN && event.key.repeat == 0) {
+            const SDL_Keycode key = event.key.keysym.sym;
+            if (key == SDLK_TAB) {
+                menuFocus = (menuFocus + ((event.key.keysym.mod & KMOD_SHIFT) ? 2 : 1)) % 3;
             }
-            else if (click.x >= 0 && click.y >= 0 && noAi.mouseOver(click.x, click.y)) {
-                if (debugClicks) {
-                    std::cout << "UI click: no-ai\n";
-                }
-                aiStarted = false;
-                aiIsWhite = false;
-                menuActive = false;
+            else if (key == SDLK_RIGHT || key == SDLK_DOWN) {
+                menuFocus = (menuFocus + 1) % 3;
             }
-            else if (debugClicks) {
-                std::cout << "UI click: none\n";
+            else if (key == SDLK_LEFT || key == SDLK_UP) {
+                menuFocus = (menuFocus + 2) % 3;
+            }
+            else if (key == SDLK_RETURN || key == SDLK_KP_ENTER || key == SDLK_SPACE) {
+                startGame(menuFocus);
+                return;
             }
         }
     }
 
-    SDL_Point mouse = lastMouseLogical;
-    if (mouse.x < 0 || mouse.y < 0) {
-        int mouseX = 0;
-        int mouseY = 0;
-        SDL_GetMouseState(&mouseX, &mouseY);
-        mouse = windowToLogical(mouseX, mouseY);
-    }
-    const int mouseX = mouse.x;
-    const int mouseY = mouse.y;
-
-    const bool hoverWhite = aiWhite.mouseOver(mouseX, mouseY);
-    const bool hoverBlack = aiBlack.mouseOver(mouseX, mouseY);
-    const bool hoverNoAi = noAi.mouseOver(mouseX, mouseY);
-
-    if (hoverWhite || hoverBlack || hoverNoAi) {
-        SDL_SetCursor(click != nullptr ? click : arrow);
-    }
-    else {
-        SDL_SetCursor(arrow);
+    SDL_SetCursor(optionAt(lastMouseLogical) >= 0 && click != nullptr ? click : arrow);
+    SDL_SetRenderDrawColor(renderer, background.r, background.g, background.b, 255);
+    SDL_RenderClear(renderer);
+    // A quiet board pattern connects the welcome screen to the game.
+    SDL_SetRenderDrawColor(renderer, 34, 31, 28, 255);
+    for (int y = 0; y < 8; ++y) {
+        for (int x = 0; x < 8; ++x) {
+            if ((x + y) % 2 == 1) {
+                SDL_Rect square{x * 100, y * 100, 100, 100};
+                SDL_RenderFillRect(renderer, &square);
+            }
+        }
     }
 
-    aiWhite.draw(renderer);
-    aiBlack.draw(renderer);
-    noAi.draw(renderer);
+    const auto centeredText = [&](const std::string &text, int centerX, int y, float size, SDL_Color color) {
+        const SDL_Point bounds = measureText(text, size);
+        drawText(text, centerX - bounds.x / 2, y, color, size);
+    };
 
-    const SDL_Color textBlack{0, 0, 0, 255};
-    const SDL_Color textWhite{255, 255, 255, 255};
+    drawRoundedRect({104, 134, 592, 524}, 24, panel);
+    centeredText("CHESS AI", 400, 170, 21.0f, accent);
+    centeredText("Choose your side", 400, 216, 48.0f, primary);
 
-    const std::string chooseText = "Choose Ai Color";
-    const SDL_Point chooseSize = measureText(chooseText);
-    const int chooseX = logicalSize / 2 - chooseSize.x / 2;
-    const int chooseY = logicalSize / 20;
-    drawText(chooseText, chooseX, chooseY, textBlack);
-
-    const std::string whiteText = "White";
-    const SDL_Point whiteSize = measureText(whiteText);
-    const SDL_Rect whiteRect = aiWhite.getRect();
-    const int whiteX = whiteRect.x + whiteRect.w / 2 - whiteSize.x / 2;
-    const int whiteY = whiteRect.y + whiteRect.h / 2 - whiteSize.y / 2;
-    drawText(whiteText, whiteX, whiteY, textBlack);
-
-    const std::string blackText = "Black";
-    const SDL_Point blackSize = measureText(blackText);
-    const SDL_Rect blackRect = aiBlack.getRect();
-    const int blackX = blackRect.x + blackRect.w / 2 - blackSize.x / 2;
-    const int blackY = blackRect.y + blackRect.h / 2 - blackSize.y / 2;
-    drawText(blackText, blackX, blackY, textBlack);
-
-    const std::string noAiText = "No Ai";
-    const SDL_Point noAiSize = measureText(noAiText);
-    const SDL_Rect noAiRect = noAi.getRect();
-    const int noAiX = noAiRect.x + noAiRect.w / 2 - noAiSize.x / 2;
-    const int noAiY = noAiRect.y + noAiRect.h / 2 - noAiSize.y / 2;
-    drawText(noAiText, noAiX, noAiY, textWhite);
-
-    SDL_SetRenderDrawColor(renderer, 255, 255, 255, 220);
-    if (hoverWhite) {
-        SDL_Rect r = aiWhite.getRect();
-        SDL_RenderDrawRect(renderer, &r);
+    for (int i = 0; i < 3; ++i) {
+        SDL_Rect rect = options[i].getRect();
+        const bool focused = menuFocus == i;
+        drawRoundedRect(rect, 14, focused ? accent : SDL_Color{78, 71, 61, 255});
+        SDL_Rect inset{rect.x + 2, rect.y + 2, rect.w - 4, rect.h - 4};
+        drawRoundedRect(inset, 12, focused ? activeCard : card);
+        if (i < 2) {
+            const int centerX = rect.x + rect.w / 2;
+            drawFilledCircle(centerX, 376, 49, SDL_Color{110, 94, 72, 255});
+            // Reuse the same kings that appear on the board.
+            const Piece* king = board.getPiece(4, i == 0 ? 7 : 0);
+            if (king != nullptr && king->getTexture() != nullptr) {
+                SDL_Rect icon{centerX - 47, 329, 94, 94};
+                SDL_RenderCopy(renderer, king->getTexture(), nullptr, &icon);
+            }
+            centeredText(i == 0 ? "Play as White" : "Play as Black", centerX, 445, 30.0f, primary);
+        }
+        else {
+            centeredText("Two players", rect.x + rect.w / 2, rect.y + 19, 27.0f, primary);
+        }
     }
-    if (hoverBlack) {
-        SDL_Rect r = aiBlack.getRect();
-        SDL_RenderDrawRect(renderer, &r);
-    }
-    if (hoverNoAi) {
-        SDL_Rect r = noAi.getRect();
-        SDL_RenderDrawRect(renderer, &r);
-    }
-
     SDL_RenderPresent(renderer);
-
-    if (!menuActive) {
-        SDL_SetCursor(arrow);
-    }
 }

@@ -150,6 +150,7 @@ void Piece::loadTextures(SDL_Renderer* renderer)
         }
 
         SDL_SetTextureBlendMode(texture, SDL_BLENDMODE_BLEND);
+        SDL_SetTextureScaleMode(texture, SDL_ScaleModeLinear);
         textures[s] = texture;
     }
 

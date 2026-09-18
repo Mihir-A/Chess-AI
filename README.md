@@ -13,7 +13,7 @@
 </div>
 
 <div align="center">
-  <img src="images/screenshot.png" alt="Screenshot" width="512" height="540">
+  <img src="images/screenshot.png" alt="Chess board with legal move hints" width="512" height="512">
 </div>
 
 
@@ -93,8 +93,8 @@ Run the `chess` binary from the build output folder. If needed, `chmod +x chess`
 
 ## Screenshots
 <p float="left">
-  <img src="images/intro.png" alt="Screenshot" width="256" height="270">
-  <img src="images/ss2.png" alt="Screenshot" width="256" height="270">
+  <img src="images/intro.png" alt="Choose your side" width="256" height="256">
+  <img src="images/ss2.png" alt="Checkmate result overlay" width="256" height="256">
 </p>
 
 
